@@ -72,3 +72,6 @@ All questions send to support@cackle.ru and we will reply for 5 hours
 
 = 1.11 =
 * Extra screenshots removed
+
+= 1.12 =
+* Readme fixes
