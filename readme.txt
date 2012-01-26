@@ -69,3 +69,6 @@ All questions send to support@cackle.ru and we will reply for 5 hours
 * Extra whitespaces removed
 * Screenshots added
 * Small style fixes
+
+= 1.11 =
+* Extra screenshots removed
