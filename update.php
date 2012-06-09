@@ -19,7 +19,7 @@ class CackleUpdate{
 	function request_prepare($channels){
 		$update_request = "";
 		foreach ($channels as $comment_num => $value ) {
-			$post_id =$value ->comment_post_ID;
+			$post_id =$value ->ID;
 			$update_request .= "chan" .	$comment_num . "=" . get_permalink($post_id) . "&post" . $comment_num . "=" . $post_id . "&";
 			//$update_request .= "chan" .	$comment_num . "=" . $post_id . "&post" . $comment_num . "=" . get_permalink($post_id) . "&";
 		}
