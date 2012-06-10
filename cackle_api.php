@@ -33,7 +33,7 @@ function update_comments($update_request){
 					'body' => $update_request
 			)
 	);
-	return $update_response["response"];
+	
 }
 
 function key_validate($api,$site,$account){
