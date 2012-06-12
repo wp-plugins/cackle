@@ -28,7 +28,7 @@ function update_comments($update_request){
 			$this->update_url,
 			array(
 					'method' => 'POST',
-					'headers' => array("referer" =>  $blog_url),
+					'headers' => array("referer" =>  $blog_url, "Content-type" => "application/x-www-form-urlencoded"),
 					//'body' => "chan0=http://localhost:88/wordpress/?p=1&post0=1&count=1"
 					'body' => $update_request
 			)

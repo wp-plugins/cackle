@@ -10,7 +10,6 @@ class CackleUpdate{
 	}
 	function get_channels(){
 		global $wpdb;
-		$comment_id_fields = comment_id_fields(); 
 		$channels=	$wpdb->get_results($wpdb->prepare("SELECT ID FROM $wpdb->posts group by ID"));
 	
 	return $channels;

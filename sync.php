@@ -78,6 +78,7 @@ class Sync{
 	);
 	$commentdata['comment_ID'] = wp_insert_comment($commentdata);
 	$comment_id = $commentdata['comment_ID'];
+	
 	update_comment_meta($comment_id, 'cackle_parent_post_id', $comment['parent']);
 	update_comment_meta($comment_id, 'cackle_post_id', $comment['id']);
 

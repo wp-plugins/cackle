@@ -3,7 +3,7 @@
 Plugin Name: Cackle comments
 Plugin URI: http://cackle.ru
 Description: This plugin allows your website's audience communicate through social networks like Facebook, Vkontakte, Twitter, e.t.c.
-Version: 1.19
+Version: 1.20
 Author: Denis Golovachev
 Author URI: http://borov.net
 */
@@ -48,7 +48,7 @@ class cackle  {
 		}
 		function cackle_activated(){
 			
-				if($_POST['api_id'] && $_POST['site_api_key'] && strlen($_POST['site_api_key'])==64 && $_POST['account_api_key'] && strlen($_POST['account_api_key'])==64 ){
+				if(!empty($_POST['api_id']) && isset($_POST['site_api_key']) && strlen($_POST['site_api_key'])==64 && isset($_POST['account_api_key']) && strlen($_POST['account_api_key'])==64 ){
 						
 					
 					return true;
@@ -64,14 +64,18 @@ class cackle  {
 			
 				
 				if ($field=='api_id'){
-					if($_POST['api_id']){
+					if(empty($_POST['api_id'])){
+						//print_r("is null");
+						return false;
+					}
+					else{
 						return true;
 					}
 					
 				}
 				elseif ($field=='api_key'){
-					if (($_POST['site_api_key'] && strlen($_POST['site_api_key'])==64) && ($_POST['account_api_key'] && strlen($_POST['account_api_key'])==64)) {
-						if ( $this->key_validate($_POST['api_id'],$_POST['site_api_key'],$_POST['account_api_key'])) {
+					if ((isset($_POST['site_api_key']) && strlen($_POST['site_api_key'])==64) && (isset($_POST['account_api_key']) && strlen($_POST['account_api_key'])==64)) {
+					    if ( $this->key_validate($_POST['api_id'],$_POST['site_api_key'],$_POST['account_api_key'])) {
 						return true;
 						}
 					}
@@ -115,7 +119,7 @@ class cackle  {
 		function cackle_validate_field($field,$length,$message){
 			if ($_POST){
 				if ($length) {
-					if ((!$_POST[$field]) || strlen($_POST[$field])!=64 ){
+					if ((empty($_POST[$field])) || strlen($_POST[$field])!=64 ){
 						if ($message){	
 							echo '<span style="color:red;padding-left:5px;font-weight:bold;">invalid value </span>';
 						}
@@ -124,7 +128,7 @@ class cackle  {
 				
 				}
 				else{
-					if (!$_POST[$field]){
+					if (empty($_POST[$field])){
 						if ($message){
 							echo '<span style="color:red;padding-left:5px;font-weight:bold;">invalid value</span>';
 						}
@@ -139,10 +143,12 @@ class cackle  {
 		
 		
 		function do_this_in_an_hour(){
+		    if (version_compare(get_bloginfo('version'), '2.9', '>=')){
 				global $post;
 				$_post_id = $post->ID;
 				$sync = new Sync();
 				$response = $sync->init();
+		    }
 		}
 
 		function head_script () {
@@ -172,13 +178,13 @@ class cackle  {
 				 		/**
 				 		 * Check each input to update in db
 				 		 */
-				 		switch ($f){
-				 			case 0:
+				 		
+				 			if ($this->cackle_activated()){
 				 				if ($this->cackle_field_activated('api_id')){
 					 			 update_option('cackle_apiId', (int)$_POST['api_id']);
 					 		  //   $this->showmessage('api id saved');
 				 				}
-				 			case 1:
+				 			
 					 			if ($this->cackle_field_activated('api_key')){
 					 			update_option('cackle_siteApiKey', (string)$_POST['site_api_key']);
 					 			//$this->showmessage('site_api are saved');
@@ -187,8 +193,8 @@ class cackle  {
 								update_option('cackle_comments_hidewpcomnts', (isset($_POST['hidewpcomments'])) ? 1 : 0);
 								//$this->showmessage('account_api are saved');
 						 		}
-				 		    
-				 		}
+				 			}
+				 		
 				 	}
 				 }
 
@@ -234,7 +240,7 @@ class cackle  {
 					//if (!$this->key_validate($_POST['api_id'],$_POST['site_api_key'],$_POST['account_api_key'])){
 					//	echo '<span style="color:red;padding-left:5px;font-weight:bold;">invalid keys</span>';
 					//}
-				if ($_POST){	
+				if (isset($_POST)){	
 					if($this->cackle_activated()){
 						if (!$this->key_validate($_POST['api_id'],$_POST['site_api_key'],$_POST['account_api_key'])){
 							echo '<span style="color:red;padding-left:5px;font-weight:bold;">invalid keys</span>';
@@ -250,7 +256,7 @@ class cackle  {
 					if ($this->cackle_activated() ){
 						if ($this->key_validate($_POST['api_id'],$_POST['site_api_key'],$_POST['account_api_key'])){
 						echo('<br/><span style="color:green">Starting comments update...</span>');
-						if (get_option(cackle_apiId)){
+						if (get_option('cackle_apiId')){
 							echo('<br/><span style="color:green">Comments were successfully updated.</span>');
 							$c_update= new CackleUpdate();
 							$c_update->init();

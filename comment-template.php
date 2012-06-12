@@ -23,17 +23,54 @@ if(get_option('cackle_comments_hidewpcomnts')!=1)
         endif;
     ?>
 
+        <div id="mc-container"></div>
+        <script type="text/javascript">
+        var mcSite = '<?php echo $api_id?>';
+        var mcChannel = '<?php echo $post->ID?>';
+        </script>
+    <?php
+    if(get_option('cackle_comments_hidewpcomnts')==1){
+    ?>
+    <?php
+    } 
+    else{
+        if (version_compare(get_bloginfo('version'), '3.0', '<')){
+    ?> 
+        <script type="text/javascript">
+        var element = document.getElementById("comments");
+        if (element != null) {
+            element.parentNode.removeChild(element);
+        }
+        var respond=document.getElementById('respond');
+        if (respond != null) {
+            respond.parentNode.removeChild(respond);
+        }
+        var list=document.getElementsByClassName('commentlist');
+        if (list[0] != null) {
+           list[0].style.display = 'none';
+        }
+        </script>
 
-<?php  if(get_option('cackle_comments_hidewpcomnts')==1){?>
-		<div id="mc-container"></div>
-		<script type="text/javascript">
-		<?php }else{?>
-		<script type="text/javascript">
-		document.getElementById('comments').innerHTML = '<div id="mc-container"></div>'
-		<?php }?>
-   		var mcSite = '<?php echo $api_id?>';
-    	var mcChannel = '<?php echo $post->ID?>';
-		</script>
+    <?php
+        }
+        else {
+        ?>
+        <script type="text/javascript">
+        element = document.getElementById("comments");
+        element.parentNode.removeChild(element);
+        </script>
+        <?php 
+        }
+    }?>
+
+        <script type="text/javascript">
+        var wrapper = document.createElement('div');
+        wrapper.id = "comments" 
+        var myDiv = document.getElementById('mc-container'); 
+        wrapper.appendChild(myDiv.cloneNode(true)); 
+        myDiv.parentNode.replaceChild(wrapper, myDiv);	
+        </script>
+
 
 
 <?php if($api_id==''):?>API ID not specified<?php endif;?>
