@@ -34,7 +34,7 @@ if(get_option('cackle_comments_hidewpcomnts')!=1)
     <?php
     } 
     else{
-        if (version_compare(get_bloginfo('version'), '3.0', '<')){
+        if (version_compare(get_bloginfo('version'), '2.0', '>')){
     ?> 
         <script type="text/javascript">
         var element = document.getElementById("comments");
@@ -53,14 +53,7 @@ if(get_option('cackle_comments_hidewpcomnts')!=1)
 
     <?php
         }
-        else {
-        ?>
-        <script type="text/javascript">
-        element = document.getElementById("comments");
-        element.parentNode.removeChild(element);
-        </script>
-        <?php 
-        }
+
     }?>
 
         <script type="text/javascript">
