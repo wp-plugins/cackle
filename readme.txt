@@ -12,7 +12,6 @@ This plugin integrates "Cackle" social commenting system (Google+, Twitter, Face
 This plugin allows users to use social networks accounts to leave comments.
 
 Supported social networks and OpenID providers:
-
 Google, Google+, Facebook, Twitter, Vkontakte, Mail.ru, Odnoklassniki, Yandex, Rambler, LinkedIn, Yahoo, MyOpenID, Live Journal, Flickr, Wordpress, Blogger, Verisign
 
 = Cackle for Wordpress =
@@ -46,7 +45,7 @@ Google, Google+, Facebook, Twitter, Vkontakte, Mail.ru, Odnoklassniki, Yandex, R
 == Installation ==
 
 1. Upload  folder `cackle` to the `/wp-content/plugins/` directory
-2. Register  and obtain your Site ID, Site API Key, Account API Key. Go to the Cackle admin panel -> Widget -> CMSs Plugins -> Wordpress. (See the second screenshot at http://wordpress.org/extend/plugins/cackle/screenshots/)
+2. Register and obtain your Site ID, Site API Key and Account API Key: go to the Cackle Administration Panel -> Widget -> CMSs Plugins -> Wordpress. (See the second screenshot at http://wordpress.org/extend/plugins/cackle/screenshots/ )
 3. Save it to 'cackle plugin's' page.
 4. Activate the plugin through the 'cackle plugin's' menu in WordPress
 5. In wordpress's comments menu you can find "Cackle" submenu with panel administration and settings.
