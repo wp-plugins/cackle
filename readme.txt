@@ -5,7 +5,7 @@ Requires at least: 2.9.1
 Tested up to: 3.4.2
 Stable tag: 2.01
 
-This plugin integrates "Cackle" social commenting system (Google+, Twitter, Facebook, Vkontakte, Mail.ru e.t.c.) right into your website.
+This plugin integrates Cackle Social Comments System (Google+, Twitter, Facebook, Vkontakte, Odnoklassniki and many others) right into your website.
 
 == Description ==
 
@@ -28,17 +28,17 @@ Google, Google+, Facebook, Twitter, Vkontakte, Mail.ru, Odnoklassniki, Yandex, R
 
 = Cackle Features =
 
+*   Unlimited sites
+*   Unlimited moderators
+*   Share on Vkontakte, Mail.ru, Facebook, Twitter, LinkedIn
+*   Multimedia attachments (PNG, JPG, YouTube, Vimeo, SlideShare and other...)
+*   Moderation comments through widget, without leaving your site
 *   Threaded comments and replies
 *   Notifications and reply by email
-*   Share on Vkontakte, Mail.ru, Facebook, Twitter, LinkedIn
 *   Anonymous commenting
 *   Powerful admin tools
 *   Ban by IP, User
-*   Bad words filter
-*   Unlimited sites
-*   Unlimited moderators
-*   Multimedia attachments (png, jpg, youtube, vimeo, slideshare, etc...)
-*   Moderation through widget without leaving your site
+*   Nasty words filter
 *   Customization of widget text labels
 *   Easy to install
 
@@ -46,7 +46,7 @@ Google, Google+, Facebook, Twitter, Vkontakte, Mail.ru, Odnoklassniki, Yandex, R
 == Installation ==
 
 1. Upload  folder `cackle` to the `/wp-content/plugins/` directory
-2. Register  and obtain your Site ID, Site API Key, Account API Key. Go to the Cackle admin panel -> Widget -> CMSs Plugins -> Wordpress. (See the second screenshot at http://wordpress.org/extend/plugins/cackle/screenshots/)
+2. Register and obtain your Site ID, Site API Key and Account API Key: go to the Cackle Administration Panel -> Widget -> CMSs Plugins -> Wordpress. (See the second screenshot at http://wordpress.org/extend/plugins/cackle/screenshots/ )
 3. Save it to 'cackle plugin's' page.
 4. Activate the plugin through the 'cackle plugin's' menu in WordPress
 5. In wordpress's comments menu you can find "Cackle" submenu with panel administration and settings.
