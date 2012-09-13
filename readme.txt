@@ -5,13 +5,14 @@ Requires at least: 2.9.1
 Tested up to: 3.4.2
 Stable tag: 2.01
 
-This plugin integrates "Cackle" social commenting system (Google+, Twitter, Facebook, Vkontakte, Mail.ru e.t.c.) right into your website.
+This plugin integrates Cackle Social Comments System (Google+, Twitter, Facebook, Vkontakte, Odnoklassniki and many others) right into your website.
 
 == Description ==
 
 This plugin allows users to use social networks accounts to leave comments.
 
 Supported social networks and OpenID providers:
+
 Google, Google+, Facebook, Twitter, Vkontakte, Mail.ru, Odnoklassniki, Yandex, Rambler, LinkedIn, Yahoo, MyOpenID, Live Journal, Flickr, Wordpress, Blogger, Verisign
 
 = Cackle for Wordpress =
@@ -27,17 +28,17 @@ Google, Google+, Facebook, Twitter, Vkontakte, Mail.ru, Odnoklassniki, Yandex, R
 
 = Cackle Features =
 
+*   Unlimited sites
+*   Unlimited moderators
+*   Share on Vkontakte, Mail.ru, Facebook, Twitter, LinkedIn
+*   Multimedia attachments (PNG, JPG, YouTube, Vimeo, SlideShare and other...)
+*   Moderation comments through widget, without leaving your site
 *   Threaded comments and replies
 *   Notifications and reply by email
-*   Share on Vkontakte, Mail.ru, Facebook, Twitter, LinkedIn
 *   Anonymous commenting
 *   Powerful admin tools
 *   Ban by IP, User
-*   Bad words filter
-*   Unlimited sites
-*   Unlimited moderators
-*   Multimedia attachments (png, jpg, youtube, vimeo, slideshare, etc...)
-*   Moderation through widget without leaving your site
+*   Nasty words filter
 *   Customization of widget text labels
 *   Easy to install
 
