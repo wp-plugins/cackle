@@ -13,45 +13,40 @@ This plugin allows users to use social networks accounts to leave comments.
 
 Supported social networks and OpenID providers:
 
-*   Google
-*   Google+
-*   Facebook
-*   Twitter
-*   Vkontakte
-*   Mail.ru
-*   Odnoklassniki
-*   Yandex
-*   Rambler
-*   Yahoo
-*   MyOpenID
-*   Live Journal
-*   Flickr
-*   Wordpress
-*   Blogger
-*   Verisign
+Google, Google+, Facebook, Twitter, Vkontakte, Mail.ru, Odnoklassniki, Yandex, Rambler, LinkedIn, Yahoo, MyOpenID, Live Journal, Flickr, Wordpress, Blogger, Verisign
 
 = Cackle for Wordpress =
 
 * Uses Cackle API
 * Comments indexable by search engines (SEO-friendly)
 * Auto-sync (backup) of comments with Cackle and WordPress database
+* Export local comments to cackle
+* Comments administration through wordpress
+* Manual desynchronizing comments
+* Custom html for seo
+* Comments counter for each post
 
 = Cackle Features =
 
 *   Threaded comments and replies
 *   Notifications and reply by email
-*   Share on Vkontakte, Mail.ru, Facebook, Twitter
+*   Share on Vkontakte, Mail.ru, Facebook, Twitter, LinkedIn
 *   Anonymous commenting
 *   Powerful admin tools
 *   Ban by IP, User
 *   Bad words filter
-*   Additional moderators
+*   Unlimited sites
+*   Unlimited moderators
+*   Multimedia attachments (png, jpg, youtube, vimeo, slideshare, etc...)
+*   Moderation through widget without leaving your site
+*   Customization of widget text labels
 *   Easy to install
+
 
 == Installation ==
 
 1. Upload  folder `cackle` to the `/wp-content/plugins/` directory
-2. Register  and obtain your Site ID, Site API Key, Account API Key.
+2. Register  and obtain your Site ID, Site API Key, Account API Key. Go to the Cackle admin panel -> Widget -> CMSs Plugins -> Wordpress. (See the second screenshot at http://wordpress.org/extend/plugins/cackle/screenshots/)
 3. Save it to 'cackle plugin's' page.
 4. Activate the plugin through the 'cackle plugin's' menu in WordPress
 5. In wordpress's comments menu you can find "Cackle" submenu with panel administration and settings.
@@ -67,7 +62,7 @@ Supported social networks and OpenID providers:
 3. Administration menu
 
 == Frequently Asked Questions ==
-All questions send to support@cackle.ru and we will reply for 5 hours
+All questions send to support@cackle.me and we will reply for 5 hours
 
 == Changelog ==
 
