@@ -1,9 +1,9 @@
 ﻿=== Plugin Name ===
 Contributors: Denis Golovachev, Cackle
 Tags: cackle, social, comments, вконтакте
-Requires at least: 2.6
-Tested up to: 3.3.2
-Stable tag: 1.21
+Requires at least: 2.9.1
+Tested up to: 3.4.2
+Stable tag: 2.0
 
 This plugin integrates "Cackle" social commenting system (Google+, Twitter, Facebook, Vkontakte, Mail.ru e.t.c.) right into your website.
 
@@ -54,6 +54,8 @@ Supported social networks and OpenID providers:
 2. Register  and obtain your Site ID, Site API Key, Account API Key.
 3. Save it to 'cackle plugin's' page.
 4. Activate the plugin through the 'cackle plugin's' menu in WordPress
+5. In wordpress's comments menu you can find "Cackle" submenu with panel administration and settings.
+6. If you need export local comments to Cackle you should click "export comments" button in settings.
 
 
 == Screenshots ==
@@ -61,6 +63,8 @@ Supported social networks and OpenID providers:
 1. Cackle widget preview
 
 2. API key highlighted in red
+
+3. Administration menu
 
 == Frequently Asked Questions ==
 All questions send to support@cackle.ru and we will reply for 5 hours
@@ -113,3 +117,11 @@ All questions send to support@cackle.ru and we will reply for 5 hours
 
 = 1.21 =
 * Bug fix for custom templates and update version to 1.21
+
+= 2.0 =
+* Export local comments to cackle
+* Added comments administration through wordpress
+* Added manual desynchronizing comments
+* Added custom html for seo
+* Added comments counter for each post
+* Update version to 2.0
