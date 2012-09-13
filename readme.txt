@@ -5,7 +5,7 @@ Requires at least: 2.9.1
 Tested up to: 3.4.2
 Stable tag: 2.01
 
-This plugin integrates Cackle Social Comments System (Google+, Twitter, Facebook, Vkontakte, Odnoklassniki and many others) right into your website.
+This plugin integrates Cackle Comment System (Google+, Twitter, Facebook, Vkontakte, Odnoklassniki and other) right into your website.
 
 == Description ==
 
