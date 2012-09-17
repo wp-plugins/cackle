@@ -3,7 +3,7 @@ Contributors: Denis Golovachev, Cackle
 Tags: cackle, social, comments, вконтакте
 Requires at least: 2.9.1
 Tested up to: 3.4.2
-Stable tag: 2.01
+Stable tag: 2.02
 
 This plugin integrates Cackle Comment System (Google+, Twitter, Facebook, Vkontakte, Odnoklassniki and other) right into your website.
 
@@ -25,6 +25,7 @@ Google, Google+, Facebook, Twitter, Vkontakte, Mail.ru, Odnoklassniki, Yandex, R
 * Manual desynchronizing comments
 * Custom html for seo
 * Comments counter for each post
+* Support disable comments for each post or page through wordpress's "Quick edit"
 
 = Cackle Features =
 
@@ -123,3 +124,7 @@ All questions send to support@cackle.me and we will reply for 5 hours
 
 = 2.01 =
 * Added features description
+
+= 2.02 =
+* Bugfix for import anonym comments from Cackle. ReSynchronise needed to update anonym author and email in local database
+* Support disable comments for each post or page through wordpress's "Quick edit"

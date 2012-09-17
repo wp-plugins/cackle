@@ -74,16 +74,26 @@ class Sync{
     else {
         $postid = $comment['channel'];
     }
+    if ($comment['author']!=null){
+        $comment_author = $comment['author']['name'];
+        $comment_author_email =  $comment['author']['email'];
+        $comment_author_url = $comment['author']['www'];
+    }
+    else{
+        $comment_author = $comment['anonym']['name'];
+        $comment_author_email =  $comment['anonym']['email'];
+        $comment_author_url = $comment['anonym']['www'];
+    }
     $comment_for_id = $wpdb->get_row($wpdb->prepare( "SELECT comment_ID, comment_parent FROM $wpdb->comments WHERE comment_agent = 'Cackle:{$comment['id']}' LIMIT 1"), ARRAY_A);
     $commentdata = array(
             'comment_post_ID' => $postid,
-            'comment_author' => $comment['author']['name'],
+            'comment_author' =>  $comment_author,
             'comment_karma' => $comment['rating'],
-            'comment_author_email' => $comment['author']['email'],
+            'comment_author_email' => $comment_author_email,
             //'comment_date' => date('Y-m-d\TH:i:s', strtotime($comment->created_at) + (get_option('gmt_offset') * 3600)),
             //'comment_date_gmt' => $comment->created_at,
             'comment_date' => strftime("%Y-%m-%d %H:%M:%S", $comment['created']/1000 + (get_option('gmt_offset') * 3600)),
-            'comment_author_url' => $comment['author']['www'],
+            'comment_author_url' => $comment_author_url,
             'comment_author_IP' => $comment['ip'],
             'comment_content' => apply_filters('pre_comment_content', $comment['message']),
             'comment_approved' => $status,

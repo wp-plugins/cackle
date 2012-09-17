@@ -1,5 +1,26 @@
-
 <?php
+function is_comments_close(){
+    global $wpdb;
+    global $post;
+    $post_id=$post->ID;
+    $status = $wpdb->get_results($wpdb->prepare("
+            SELECT comment_status
+            FROM $wpdb->posts
+            WHERE ID = %d
+            ", $post_id));
+
+            $status = $status[0];
+            $comment_status = $status->comment_status;
+            if($comment_status == "closed"){
+                $status = true;
+            }
+            else{
+                $status = false;
+            }
+    return $status;
+}
+
+if ( !is_comments_close()){
     $api_id = get_option('cackle_apiId','');
     require_once(dirname(__FILE__) . '/cackle_api.php');
     require_once(dirname(__FILE__) . '/sync.php');
@@ -65,5 +86,5 @@ if(get_option('cackle_comments_hidewpcomnts')!=1) {
 
 <?php if($api_id==''):?>API ID not specified<?php endif;?>
 <?php 
-
+}
 ?>
