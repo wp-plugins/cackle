@@ -103,10 +103,10 @@ class Sync{
     $commentdata['comment_ID'] = wp_insert_comment($commentdata);
     $comment_id = $commentdata['comment_ID'];
     
-    update_comment_meta($comment_id, 'cackle_parent_post_id', $comment['parent']);
+    update_comment_meta($comment_id, 'cackle_parent_post_id', $comment['parentId']);
     update_comment_meta($comment_id, 'cackle_post_id', $comment['id']);
 
-    if ($comment['parent']) {
+    if ($comment['parentId']) {
         $parent_id = $wpdb->get_var($wpdb->prepare( "SELECT comment_id FROM $wpdb->commentmeta WHERE meta_key = 'cackle_post_id' AND meta_value = %s LIMIT 1", $comment['parent']));
         if ($parent_id) {
                 $wpdb->query(

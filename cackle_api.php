@@ -5,7 +5,7 @@ class CackleAPI{
         $this->accountApiKey=$accountApiKey = get_option('cackle_accountApiKey');
         $this->siteApiKey=$siteApiKey = get_option('cackle_siteApiKey');
         $this->cackle_last_comment=$cackle_last_comment = get_option('cackle_last_comment',0);
-        $this->get_url = $get_url = "http://cackle.ru/api/comment/list2?accountApiKey=$accountApiKey&siteApiKey=$siteApiKey&id=$cackle_last_comment";
+        $this->get_url = $get_url = "http://cackle.ru/api/comment/list?accountApiKey=$accountApiKey&siteApiKey=$siteApiKey&id=$cackle_last_comment";
         $this->update_url = $update_url = "http://cackle.ru/api/wp115/setup?accountApiKey=$accountApiKey&siteApiKey=$siteApiKey";
         $this->last_error = null;
     }
@@ -30,7 +30,7 @@ function update_comments($update_request){
             $this->update_url,
             array(
                     'method' => 'POST',
-                    'headers' => array("referer" =>  $blog_url, "Content-type" => "application/x-www-form-urlencoded"),
+                    'headers' => array("Content-type" => "application/x-www-form-urlencoded"),
                     //'body' => "chan0=http://localhost:88/wordpress/?p=1&post0=1&count=1"
                     'body' => $update_request
             )
@@ -39,7 +39,7 @@ function update_comments($update_request){
 }
 
 function key_validate($api,$site,$account){
-    $key_url ="http://cackle.ru/api/keys/check?siteId=$api&accountApiKey=$account&siteApiKey=$site";
+    $key_url ="http://cackle.me/api/keys/check?siteId=$api&accountApiKey=$account&siteApiKey=$site";
     $http = new WP_Http();
     
     $blog_url = get_bloginfo('wpurl');
@@ -62,6 +62,7 @@ function import_wordpress_comments(&$wxr, $timestamp, $eof=true) {
             'http://import.cackle.me/api/import-wordpress-comments',
             array(
                     'method' => 'POST',
+					'timeout' => 10,
                     'headers' => array("referer" =>  $blog_url, "Content-type" => "application/x-www-form-urlencoded"),
                     'body' => array(
                             'siteId' =>$this->siteId,
@@ -75,9 +76,8 @@ function import_wordpress_comments(&$wxr, $timestamp, $eof=true) {
             )
     );
     
-    if ($response->errors) {
-        // hack
-        $this->api->last_error = $response->errors;
+    if ($response['body']=='fail') {
+		$this->api->last_error = $response['body'];
         return -1;
     }
     $data = $response['body'];

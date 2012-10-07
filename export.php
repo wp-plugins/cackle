@@ -1,7 +1,5 @@
 <?php
-/**
- * Adapted from WordPress 2.8
- */
+
 @set_time_limit(0);
 @ini_set('memory_limit', '256M');
 define('WXR_VERSION', '1.0');
@@ -10,13 +8,7 @@ function cackle_identifier_for_post($post) {
     return $post->ID . ' ' . $post->guid;
 }
 
-/**
- * {@internal Missing Short Description}}
- *
- * @since unknown
- *
- * @param unknown_type $categories
- */
+
 function cackle_export_wxr_missing_parents($categories) {
     if ( !is_array($categories) || empty($categories) )
         return array();
@@ -32,51 +24,28 @@ function cackle_export_wxr_missing_parents($categories) {
     return $parents;
 }
 
-/**
- * Place string in CDATA tag.
- *
- * @since unknown
- *
- * @param string $str String to place in XML CDATA tag.
- */
-function cackle_export_wxr_cdata($str) {
-    if ( seems_utf8($str) == false )
-        $str = utf8_encode($str);
 
-    // $str = ent2ncr(esc_html($str));
-
-    $str = '<![CDATA[' . str_replace( ']]>', ']]]]><![CDATA[>', $str ) . ']]>';
-
-    return $str;
+function cackle_export_wxr_cdata($string) {
+    if ( seems_utf8($string) == false )
+        $string = utf8_encode($string);
+		$string = '<![CDATA[' . str_replace( ']]>', ']]]]><![CDATA[>', $string ) . ']]>';
+	return $string;
 }
 
-/**
- * {@internal Missing Short Description}}
- *
- * @since unknown
- *
- * @return string Site URL.
- */
+
 function cackle_export_wxr_site_url() {
     global $current_site;
 
-    // mu: the base url
     if ( isset($current_site->domain) ) {
         return 'http://'.$current_site->domain.$current_site->path;
     }
-    // wp: the blog url
+
     else {
         return get_bloginfo_rss('url');
     }
 }
 
-/**
- * {@internal Missing Short Description}}
- *
- * @since unknown
- *
- * @param object $c Category Object
- */
+
 function cackle_export_wxr_cat_name($c) {
     if ( empty($c->name) )
         return;
@@ -84,13 +53,6 @@ function cackle_export_wxr_cat_name($c) {
     echo '<wp:cat_name>' . cackle_export_wxr_cdata($c->name) . '</wp:cat_name>';
 }
 
-/**
- * {@internal Missing Short Description}}
- *
- * @since unknown
- *
- * @param object $c Category Object
- */
 function cackle_export_wxr_category_description($c) {
     if ( empty($c->description) )
         return;
@@ -98,13 +60,7 @@ function cackle_export_wxr_category_description($c) {
     echo '<wp:category_description>' . cackle_export_wxr_cdata($c->description) . '</wp:category_description>';
 }
 
-/**
- * {@internal Missing Short Description}}
- *
- * @since unknown
- *
- * @param object $t Tag Object
- */
+
 function cackle_export_wxr_tag_name($t) {
     if ( empty($t->name) )
         return;
@@ -112,13 +68,7 @@ function cackle_export_wxr_tag_name($t) {
     echo '<wp:tag_name>' . cackle_export_wxr_cdata($t->name) . '</wp:tag_name>';
 }
 
-/**
- * {@internal Missing Short Description}}
- *
- * @since unknown
- *
- * @param object $t Tag Object
- */
+
 function cackle_export_wxr_tag_description($t) {
     if ( empty($t->description) )
         return;
@@ -126,7 +76,7 @@ function cackle_export_wxr_tag_description($t) {
     echo '<wp:tag_description>' . cackle_export_wxr_cdata($t->description) . '</wp:tag_description>';
 }
 
-// receives an array of posts to export
+
 function cackle_export_wp($post, $comments=null) {
     global $wpdb;
 
@@ -134,7 +84,7 @@ function cackle_export_wp($post, $comments=null) {
         $comments = $wpdb->get_results( $wpdb->prepare("SELECT * FROM $wpdb->comments WHERE comment_post_ID = %d AND comment_agent NOT LIKE 'Cackle:%%'", $post->ID) );
     }
 
-    // start catching output
+
     ob_start();
 
     echo '<?xml version="1.0" encoding="' . get_bloginfo('charset') . '"?' . ">\n";
@@ -190,7 +140,7 @@ if ( $comments ) { foreach ( $comments as $c ) { ?>
 </rss>
 <?php
 
-    // end of WXR output
+
     $output = ob_get_clean();
 
     return $output;

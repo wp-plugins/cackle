@@ -3,7 +3,7 @@
 Plugin Name: Cackle comments
 Plugin URI: http://cackle.ru
 Description: This plugin allows your website's audience communicate through social networks like Facebook, Vkontakte, Twitter, e.t.c.
-Version: 2.02
+Version: 2.03
 Author: Denis Golovachev,Cackle
 Author URI: http://borov.net
 */
@@ -332,6 +332,7 @@ function cackle_request_handler() {
                             $msg = cackle_i('Processed comments on post #%s&hellip;', $post_id);
                 }
                     $result = 'fail';
+					ob_start();
                     $response = null;
                     if ($post) {
                     require_once(dirname(__FILE__) . '/export.php');
@@ -339,7 +340,7 @@ function cackle_request_handler() {
                     $response = $cackle_api->import_wordpress_comments($wxr, $timestamp, $eof);
                     if (!($response == "success")) {
                             $result = 'fail';
-                            $msg = '<p class="status cackle-export-fail">'. cackle_i('Sorry, something unexpected happened with the export. Please <a href="#" id="cackle_export_retry">try again</a></p><p>If your API key has changed, you may need to reinstall Cackle (deactivate the plugin and then reactivate it). If you are still having issues, refer to the <a href="%s" onclick="window.open(this.href); return false">WordPress help page</a>.', 'http://cackle.me/help/'). '</p>';
+                            $msg = '<p class="status cackle-export-fail">'. cackle_i('Sorry, something  happened with the export. Please <a href="#" id="cackle_export_retry">try again</a></p><p>If your API key has changed, you may need to reinstall Cackle (deactivate the plugin and then reactivate it). If you are still having issues, refer to the <a href="%s" onclick="window.open(this.href); return false">WordPress help page</a>.', 'http://cackle.me/help/'). '</p>';
                     $response = $cackle_api->get_last_error();
                     }
                         else {
@@ -350,8 +351,9 @@ function cackle_request_handler() {
                     $result = 'success';
                 }
                 }
-                // send AJAX response
-                $response = compact('result', 'timestamp', 'status', 'post_id', 'msg', 'eof', 'response');
+                //AJAX response
+				$debug = ob_get_clean();
+                $response = compact('result', 'timestamp', 'status', 'post_id', 'msg', 'eof', 'response', 'debug');
                     header('Content-type: text/javascript');
                     echo cf_json_encode($response);
                     die();
