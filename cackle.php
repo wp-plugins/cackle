@@ -3,7 +3,7 @@
 Plugin Name: Cackle comments
 Plugin URI: http://cackle.ru
 Description: This plugin allows your website's audience communicate through social networks like Facebook, Vkontakte, Twitter, e.t.c.
-Version: 2.03
+Version: 2.04
 Author: Denis Golovachev,Cackle
 Author URI: http://borov.net
 */
@@ -245,7 +245,6 @@ class cackle  {
         function do_this_in_an_hour(){
             if (version_compare(get_bloginfo('version'), '2.9', '>=')){
                 global $post;
-                $_post_id = $post->ID;
                 $sync = new Sync();
                 $response = $sync->init();
             }

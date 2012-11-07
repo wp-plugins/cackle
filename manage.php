@@ -26,6 +26,7 @@ function cackle_options() {
 
                     update_option('cackle_accountApiKey', (string)$_POST['account_api_key']);
                     update_option('cackle_comments_hidewpcomnts', (isset($_POST['hidewpcomments'])) ? 1 : 0);
+                    update_option('cackle_sso', (isset($_POST['enable_sso'])) ? 1 : 0);
                     //showmessage('account_api are saved');
                 }
             }
@@ -83,6 +84,7 @@ function cackle_options() {
                 }
                  ?> 
                 <p><?php echo __('Disallow search engines to index comments','cackle_comments'); ?>: <input type="checkbox" value="1" name="hidewpcomments" <?php if(get_option('cackle_comments_hidewpcomnts')==1):?>  checked="checked" <?php endif;?>/></p>
+                <p><?php echo __('Enable <b>Single Sign On</b>','cackle_comments'); ?>: <input type="checkbox" value="1" name="enable_sso" <?php if(get_option('cackle_sso')==1):?> checked="checked" <?php endif;?>/> Allows the registered (on your site) users work with widget and post comments. <b>Note</b>, this option only availible on <a href="http://cackle.me/plans" title="See details about Pro Account">Pro Cackle account</a>.</p>
                 
             
                 <?php

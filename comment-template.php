@@ -20,6 +20,40 @@ function is_comments_close(){
     return $status;
 }
 
+function get_avatar_path($id){
+    $avatar_path = get_avatar($id);
+    preg_match("/src=(\'|\")(.*)(\'|\")/Uis", $avatar_path, $matches);
+    $avatar_src = substr(trim($matches[0]), 5, strlen($matches[0]) - 6);
+    if(strpos($avatar_src, 'http') === false)
+    {
+        $avatar_src = get_option('siteurl').$avatar_src;
+    }
+    //var_dump($avatar_src);
+    return $avatar_src;
+}
+
+function cackle_auth(){
+    global $current_user;
+    get_currentuserinfo();
+    $timestamp = time();
+    $siteApiKey = get_option('cackle_siteApiKey');
+    if (is_user_logged_in()){
+        $user = array(
+            'id' => $current_user->ID,
+            'name' => $current_user->display_name,
+            'email' => $current_user->user_email,
+            'avatar' => get_avatar_path($current_user->ID)
+        );
+        $user_data = base64_encode(json_encode($user));
+    }
+    else{
+        $user = '{}';
+        $user_data = base64_encode($user);
+    }
+    $sign = md5($user_data . $siteApiKey . $timestamp);
+    return "$user_data $sign $timestamp";
+}
+
 if ( !is_comments_close()){
     $api_id = get_option('cackle_apiId','');
     require_once(dirname(__FILE__) . '/cackle_api.php');
@@ -70,6 +104,9 @@ if(get_option('cackle_comments_hidewpcomnts')!=1) {
         <script type="text/javascript">
         var mcSite = '<?php echo $api_id?>';
         var mcChannel = '<?php echo $post->ID?>';
+<?php if (get_option('cackle_sso') == 1) { ?>
+        var mcSSOAuth = '<?php echo $z = cackle_auth(); ?>';
+<?php } ?>
         document.getElementById('mc-container').innerHTML = '';
         (function() {
             var mc = document.createElement('script');
