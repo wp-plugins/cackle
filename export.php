@@ -81,7 +81,7 @@ function cackle_export_wp($post, $comments=null) {
     global $wpdb;
 
     if (!$comments) {
-        $comments = $wpdb->get_results( $wpdb->prepare("SELECT * FROM $wpdb->comments WHERE comment_post_ID = %d AND comment_agent NOT LIKE 'Cackle:%%'", $post->ID) );
+        $comments = $wpdb->get_results( $wpdb->prepare("SELECT * FROM $wpdb->comments WHERE comment_post_ID = %d AND comment_agent NOT LIKE 'Cackle:%%' order by comment_date asc", $post->ID) );
     }
 
 

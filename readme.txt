@@ -137,3 +137,6 @@ All questions send to support@cackle.me and we will reply for 5 hours
 
 = 2.04 =
 * Support Single Sign-On (SSO) which allows the registered (on your site) users work with widget and post comments.
+
+= 2.05 =
+* Bugfix for exporting comments to Cackle
