@@ -22,6 +22,7 @@ function is_comments_close(){
 
 function get_avatar_path($id){
     $avatar_path = get_avatar($id);
+	$avatar_path = str_replace("&#038;", "&", $avatar_path);
     preg_match("/src=(\'|\")(.*)(\'|\")/Uis", $avatar_path, $matches);
     $avatar_src = substr(trim($matches[0]), 5, strlen($matches[0]) - 6);
     if(strpos($avatar_src, 'http') === false)

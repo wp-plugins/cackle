@@ -1,10 +1,10 @@
 <?php
 /*
 Plugin Name: Cackle comments
-Plugin URI: http://cackle.ru
+Plugin URI: http://cackle.me
 Description: This plugin allows your website's audience communicate through social networks like Facebook, Vkontakte, Twitter, e.t.c.
-Version: 2.05
-Author: Denis Golovachev,Cackle
+Version: 2.1
+Author: Denis Golovachev, Cackle
 Author URI: http://borov.net
 */
 
@@ -364,6 +364,7 @@ function cackle_request_handler() {
                 $wpdb->query("DELETE FROM `".$wpdb->prefix."commentmeta` WHERE meta_key IN ('cackle_post_id', 'cackle_parent_post_id')");
                 $wpdb->query("DELETE FROM `".$wpdb->prefix."comments` WHERE comment_agent LIKE 'Cackle:%%'");
                 update_option('cackle_last_comment', 0);
+                update_option('cackle_last_modified', 0);
 
                 ob_start();
                 $desync = new Sync();

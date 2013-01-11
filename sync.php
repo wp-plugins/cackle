@@ -5,6 +5,7 @@ class Sync{
     function init($a=""){
         $apix = new CackleAPI();
         $response1 = $apix->get_comments();
+        var_dump($response1);
          //get comments from Cackle Api for sync
         $response_size=$this->get_one_comm($response1); // get comment from array and insert it to wp db
         
@@ -39,8 +40,15 @@ class Sync{
         $obj = $this->cackle_json_decodes($response);
         $obj = $obj['comments'];
         $comments_size=count($obj);
-        foreach ($obj as $obj_e) {
-            $this->insert_comm($obj_e);
+        foreach ($obj as $comment) {
+            if ($comment['id']>get_option('cackle_last_comment',0)) {
+                $this->insert_comm($comment, $this->comment_status_decoder($comment));
+            }
+            else {
+                if ($comment['modified']>get_option('cackle_last_modified',0)) {
+                $this->update_comment_status($comment['id'], $this->comment_status_decoder($comment),$comment['modified']);
+                }
+            }
         }
         
         return $comments_size;
@@ -52,8 +60,7 @@ class Sync{
         return (substr($haystack, 0, $length) === $needle);
     }
 
-    function insert_comm($comment){
-        global $wpdb;
+    function comment_status_decoder ($comment){
         $status;
         if ($comment['status'] == "APPROVED"){
             $status = 1;
@@ -67,6 +74,18 @@ class Sync{
         else {
             $status = "trash";
         }
+        return $status;
+    }
+
+    function update_comment_status($comment_id,$status,$modified) {
+        global $wpdb;
+        $wpdb->query($wpdb->prepare("UPDATE $wpdb->comments SET comment_approved = '$status' WHERE comment_agent = %s", "Cackle:{$comment_id}"));
+        update_option( 'cackle_last_modified', $modified); //saving last comment id to database
+    }
+
+    function insert_comm($comment,$status){
+        global $wpdb;
+
     
     if ( $this->startsWith($comment['channel'], 'http' )){
         $postid = url_to_postid( $comment['channel']);
@@ -121,8 +140,10 @@ class Sync{
     }
 
     
-    update_option( 'cackle_last_comment', $comment['id'] ); //saving last comment id to database
-
+    update_option( 'cackle_last_comment', $comment['id'] );
+    if ($comment['modified']>get_option('cackle_last_modified',0)) {
+        update_option( 'cackle_last_modified', $comment['modified'] );
+    }
     
     
 }
