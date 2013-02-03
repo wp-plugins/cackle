@@ -2,8 +2,8 @@
 Contributors: Denis Golovachev, Cackle
 Tags: comments, social, social comments, вконтакте, facebook, yandex
 Requires at least: 2.9.1
-Tested up to: 3.5
-Stable tag: 2.1
+Tested up to: 3.5.1
+Stable tag: 2.1.1
 
 This plugin integrates Cackle Comment System (Google+, Twitter, Facebook, Vkontakte, Odnoklassniki and other) right into your website.
 
@@ -143,3 +143,6 @@ All questions send to support@cackle.me and we will reply for 5 hours
 
 = 2.1 =
 * Updating comment statuses (APPROVED, REJECTED, SPAM, TRASH) from Cackle to local database every 5 minutes. So, when you update comment's status in cackle's admin panel then it will be updated in your local database.
+
+= 2.1.1 =
+* Fix for updating comment statuses. 

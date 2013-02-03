@@ -1,10 +1,13 @@
 <?php
 class CackleAPI{
+    function to_i($number_to_format){
+        return number_format($number_to_format, 0, '', '');
+	}
     function CackleAPI(){
         $this->siteId=get_option('cackle_apiId');
         $this->accountApiKey=$accountApiKey = get_option('cackle_accountApiKey');
         $this->siteApiKey=$siteApiKey = get_option('cackle_siteApiKey');
-        $this->cackle_last_comment=$cackle_last_modified = get_option('cackle_last_modified',0);
+        $cackle_last_modified = $this->to_i(get_option('cackle_last_modified',0));
         $this->get_url = $get_url = "http://cackle.me/api/comment/mutable_list?accountApiKey=$accountApiKey&siteApiKey=$siteApiKey&modified=$cackle_last_modified";
         $this->update_url = $update_url = "http://cackle.me/api/wp115/setup?accountApiKey=$accountApiKey&siteApiKey=$siteApiKey";
         $this->last_error = null;
