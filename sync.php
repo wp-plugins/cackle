@@ -55,13 +55,13 @@ class Sync {
 
     function comment_status_decoder($comment) {
         $status;
-        if ($comment['status'] == "APPROVED") {
+        if (strtolower($comment['status']) == "approved") {
             $status = 1;
-        } elseif ($comment['status'] == "PENDING" || $comment['status'] == "REJECTED") {
+        } elseif (strtolower($comment['status'] == "pending") || strtolower($comment['status']) == "rejected") {
             $status = 0;
-        } elseif ($comment['status'] == "SPAM") {
+        } elseif (strtolower($comment['status']) == "spam") {
             $status = "spam";
-        } else {
+        } elseif (strtolower($comment['status']) == "deleted") {
             $status = "trash";
         }
         return $status;
@@ -86,7 +86,12 @@ class Sync {
             $comment_author_url = $comment['author']['www'];
         } else {
             $comment_author = $comment['anonym']['name'];
-            $comment_author_email = $comment['anonym']['email'];
+            if(!isset($comment['anonym']['email'])){
+                $comment_author_email = NULL;
+            }
+            else{
+                $comment_author_email = $comment['anonym']['email'];
+            }
             $comment_author_url = $comment['anonym']['www'];
         }
         $commentdata = array(
