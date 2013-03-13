@@ -41,7 +41,7 @@ class Sync {
                 $this->insert_comm($comment, $this->comment_status_decoder($comment));
             } else {
                 if ($comment['modified'] > get_option('cackle_last_modified', 0)) {
-                    $this->update_comment_status($comment['id'], $this->comment_status_decoder($comment), $comment['modified']);
+                    $this->update_comment_status($comment['id'], $this->comment_status_decoder($comment), $comment['modified'], $comment['message'] );
                 }
             }
         }
@@ -67,9 +67,10 @@ class Sync {
         return $status;
     }
 
-    function update_comment_status($comment_id, $status, $modified) {
+    function update_comment_status($comment_id, $status, $modified, $comment_content) {
         global $wpdb;
         $wpdb->query($wpdb->prepare("UPDATE $wpdb->comments SET comment_approved = '$status' WHERE comment_agent = %s", "Cackle:{$comment_id}"));
+        $wpdb->query($wpdb->prepare("UPDATE $wpdb->comments SET comment_content = '$comment_content' WHERE comment_agent = %s", "Cackle:{$comment_id}"));
         update_option('cackle_last_modified', $modified); //saving last comment id to database
     }
 
