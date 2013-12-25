@@ -5,15 +5,35 @@ class Sync {
 
     function init($a = "") {
         $apix = new CackleAPI();
-        $response1 = $apix->get_comments();
+        $cackle_last_modified = $apix->cackle_get_param("cackle_last_modified",0);
+
+        if ($a == "all_comments") {
+            $response1 = $apix->get_comments(0);
+        }
+        else {
+            $response1 = $apix->get_comments($cackle_last_modified);
+        }
         //get comments from Cackle Api for sync
+        if ($response1==NULL){
+            return false;
+        }
         $response_size = $this->get_one_comm($response1); // get comment from array and insert it to wp db
-        if ($response_size == 100 && $a = "all_comments") {
-            while ($response_size == 100) {
+        $totalPages = $this->cackle_json_decodes($response1);
+        $totalPages = $totalPages['comments']['totalPages'];
+        if ($totalPages > 1) {
+
+            for ($i=1; $i < $totalPages; $i++ ){
                 $apix = new CackleAPI();
-                $response1 = $apix->get_comments();
+                if ($a=="all_comments"){
+                   $response2 = $apix->get_comments(0,$i) ;
+                }
+                else{
+
+                    $response2 = $apix->get_comments($cackle_last_modified,$i) ;
+                }
+                //$response2 = $apix->get_comments(($a=="all_comments") ? 0 : cackle_get_param("cackle_last_modified",0),$i);
                 //get comments from Cackle Api for sync
-                $response_size = $this->get_one_comm($response1); // get comment from array and insert it to wp db
+                $response_size = $this->get_one_comm($response2); // get comment from array and insert it to wp db
             }
         }
         return "success";
@@ -32,19 +52,25 @@ class Sync {
      * Get one comment from array $response and insert it to wp_comments throught insert_comm function
      * @return $obj
      */
+
+
     function get_one_comm($response) {
-        $obj = $this->cackle_json_decodes($response);
-        $obj = $obj['comments'];
+        $apix = new CackleAPI();
+        $obj = $this->cackle_json_decodes($response,true);
+        $obj = $obj['comments']['content'];
         $comments_size = count($obj);
-        foreach ($obj as $comment) {
-            if ($comment['id'] > get_option('cackle_last_comment', 0)) {
-                $this->insert_comm($comment, $this->comment_status_decoder($comment));
-            } else {
-                if ($comment['modified'] > get_option('cackle_last_modified', 0)) {
+        if ($comments_size != 0){
+            foreach ($obj as $comment) {
+                if ($comment['id'] > get_option('cackle_last_comment', 0)) {
+                    $this->insert_comm($comment, $this->comment_status_decoder($comment));
+                } else {
+                    // if ($comment['modified'] > $apix->cackle_get_param('cackle_last_modified', 0)) {
                     $this->update_comment_status($comment['id'], $this->comment_status_decoder($comment), $comment['modified'], $comment['message'] );
+                    // }
                 }
             }
         }
+
         return $comments_size;
     }
 
@@ -68,13 +94,17 @@ class Sync {
     }
 
     function update_comment_status($comment_id, $status, $modified, $comment_content) {
+        $apix=new CackleAPI();
         global $wpdb;
         $wpdb->query($wpdb->prepare("UPDATE $wpdb->comments SET comment_approved = '$status' WHERE comment_agent = %s", "Cackle:{$comment_id}"));
         $wpdb->query($wpdb->prepare("UPDATE $wpdb->comments SET comment_content = '$comment_content' WHERE comment_agent = %s", "Cackle:{$comment_id}"));
-        update_option('cackle_last_modified', $modified); //saving last comment id to database
+        if ($modified > $apix->cackle_get_param('cackle_last_modified', 0)) {
+            $apix->cackle_set_param('cackle_last_modified', $modified); //saving last comment id to database
+        }
     }
 
     function insert_comm($comment, $status) {
+        $apix = new CackleAPI();
         global $wpdb;
         if ($this->startsWith($comment['channel'], 'http')) {
             $postid = url_to_postid($comment['channel']);
@@ -126,8 +156,8 @@ class Sync {
             }
         }
         update_option('cackle_last_comment', $comment['id']);
-        if ($comment['modified'] > get_option('cackle_last_modified', 0)) {
-            update_option('cackle_last_modified', $comment['modified']);
+        if ($comment['modified'] > $apix->cackle_get_param('cackle_last_modified', 0)) {
+            $apix->cackle_set_param('cackle_last_modified', $comment['modified']);
         }
     }
 }

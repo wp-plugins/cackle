@@ -156,3 +156,10 @@ All questions send to support@cackle.me and we will reply for 5 hours
 
 = 3.03 =
 * Edited comments sync to local database
+
+= 4.01 =
+* Support new Cackle's sync api 2.0
+* Change widget's init code
+* Added gzip support to reduce traffic
+* Improve w3c validation
+* Fix warning's notifications

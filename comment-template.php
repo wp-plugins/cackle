@@ -103,21 +103,26 @@ if (!is_comments_close()) {
 
 
     <script type="text/javascript">
-        var mcSite = '<?php echo $api_id?>';
-        var mcChannel = '<?php echo $post->ID?>';
-            <?php if (get_option('cackle_sso') == 1) { ?>
-        var mcSSOAuth = '<?php echo $z = cackle_auth(); ?>';
-            <?php } ?>
+        cackle_widget = window.cackle_widget || [];
+        cackle_widget.push({widget: 'Comment', id: '<?php echo $api_id?>', channel: '<?php echo $post->ID?>',
+    <?php if (get_option('cackle_sso') == 1) : ?> ssoAuth: '<?php print_r(cackle_auth()) ?>' <?php endif;?>   });
         document.getElementById('mc-container').innerHTML = '';
-        (function () {
+        (function() {
             var mc = document.createElement('script');
             mc.type = 'text/javascript';
             mc.async = true;
-            mc.src = 'http://cackle.me/mc.widget-min.js';
-            (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(mc);
+            mc.src = ('https:' == document.location.protocol ? 'https' : 'http') + '://cackle.me/widget.js';
+            var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(mc, s.nextSibling);
         })();
     </script>
+    <?php if (get_option('cackle_nolabel',1) == 1) { ?>
+    <a id="mc-link" href="http://cackle.me"><?php
+        if (get_option('cackle_lang') == "ru" || get_option('cackle_lang') == "uk" || get_option('cackle_lang') == "be"){
+            echo "Социальные комментарии ";
+        }
+        else {
+            echo "Social comments ";
+        }
+        ?><b style="color:#4FA3DA">Cackl</b><b style="color:#F65077">e</b></a>
+    <?php }} ?>
     <?php if ($api_id == ''): ?>API ID not specified<?php endif; ?>
-    <?php
-}
-?>

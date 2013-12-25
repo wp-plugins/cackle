@@ -3,9 +3,9 @@
 Plugin Name: Cackle comments
 Plugin URI: http://cackle.me
 Description: This plugin allows your website's audience communicate through social networks like Facebook, Vkontakte, Twitter, e.t.c.
-Version: 3.03
-Author: Denis Golovachev, Cackle
-Author URI: http://borov.net
+Version: 4.01
+Author: Cackle
+Author URI: http://cackle.me
 */
 define('CACKLE_PLUGIN_URL', WP_CONTENT_URL . '/plugins/' . cackle_plugin_basename(__FILE__));
 define('CACKLE_VERSION', '2.0');
@@ -62,18 +62,19 @@ class cackle {
 
     function comments_text($comment_text) {
         global $post;
-        return '<span class="cackle-postid" rel="' . htmlspecialchars($this->identifier_for_post($post)) . '">' . $comment_text . '</span>';
+        return '<span class="cackle-postid" id="c' . htmlspecialchars($this->identifier_for_post($post)) . '">' . $comment_text . '</span>';
     }
 
     function comments_template() {
         global $wpdb;
         //$this->do_this_in_an_hour(); //uncomment for debug without 5min delay
         if (cackle_enabled()) {
-            if ((get_option('cackle_desync', 'nosync')) != "sync") {
+            if ((get_option('cackle_desync', 'nosync')) != "sync2") {
                 $wpdb->query("DELETE FROM `" . $wpdb->prefix . "commentmeta` WHERE meta_key IN ('cackle_post_id', 'cackle_parent_post_id')");
                 $wpdb->query("DELETE FROM `" . $wpdb->prefix . "comments` WHERE comment_agent LIKE 'Cackle:%%'");
                 update_option('cackle_last_comment', 0);
-                update_option('cackle_desync', "sync");
+                update_option('cackle_last_modified', 0);
+                update_option('cackle_desync', "sync2");
             }
             //if (is_comments_close()){
             return dirname(__FILE__) . '/comment-template.php';
@@ -234,29 +235,39 @@ class cackle {
 }
 
 function cackle_output_footer_comment_js() {
+    if (is_single() || is_page()){
+    }
+    else{
     ?>
 <script type="text/javascript">
+    // <![CDATA[
     var nodes = document.getElementsByTagName('span');
     for (var i = 0, url; i < nodes.length; i++) {
         if (nodes[i].className.indexOf('cackle-postid') != -1) {
-            nodes[i].parentNode.setAttribute('cackle-channel', nodes[i].getAttribute('rel'));
+            var c_id = nodes[i].getAttribute('id').split('c');
+            nodes[i].parentNode.setAttribute('cackle-channel', c_id[1] );
             url = nodes[i].parentNode.href.split('#', 1);
             if (url.length == 1) url = url[0];
             else url = url[1]
             nodes[i].parentNode.href = url + '#mc-container';
         }
     }
-    var mcSite = '<?php echo get_option('cackle_apiId') ?>';
-    (function () {
+
+
+    cackle_widget = window.cackle_widget || [];
+    cackle_widget.push({widget: 'CommentCount', id: '<?php echo get_option('cackle_apiId') ?>'});
+    (function() {
         var mc = document.createElement('script');
         mc.type = 'text/javascript';
         mc.async = true;
-        mc.src = 'http://cackle.me/mc.count-min.js';
-        (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(mc);
+        mc.src = ('https:' == document.location.protocol ? 'https' : 'http') + '://cackle.me/widget.js';
+        var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(mc, s.nextSibling);
     })();
+    //]]>
 </script>
 
 <?php
+    }
 }
 
 add_action('wp_footer', 'cackle_output_footer_comment_js');
@@ -491,7 +502,11 @@ function cackle_validate_field($field, $length, $message) {
 function key_validate($api, $site, $account) {
     $k_validate = new CackleApi();
     $k_req = $k_validate->key_validate($api, $site, $account);
-    if ($k_req == "success") {
+    $k_req = json_decode( $k_req, true);
+    $k_req = $k_req["siteInfo"];
+    if ($k_req['correctKey'] == "true") {
+        update_option("cackle_lang",$k_req["lang"]);
+        update_option("cackle_nolabel",(($k_req["whitelabel"])? 0 : 1));
         return true;
     } else {
         return false;
@@ -523,6 +538,6 @@ function cackle_activated() {
     }
 }
 
-add_action('admin_notices', 'cackle_warning');
+//add_action('admin_notices', 'cackle_warning');
 add_action('init', 'cackle_request_handler');
 add_action('init', 'cackle_init');
