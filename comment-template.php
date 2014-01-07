@@ -51,8 +51,9 @@ function cackle_auth() {
     return "$user_data $sign $timestamp";
 }
 
+$api_id = get_option('cackle_apiId', '');
 if (!is_comments_close()) {
-    $api_id = get_option('cackle_apiId', '');
+
     require_once(dirname(__FILE__) . '/cackle_api.php');
     require_once(dirname(__FILE__) . '/sync.php');
     ?>
