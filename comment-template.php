@@ -116,14 +116,6 @@ if (!is_comments_close()) {
             var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(mc, s.nextSibling);
         })();
     </script>
-    <?php if (get_option('cackle_nolabel',1) == 1) { ?>
-    <a id="mc-link" href="http://cackle.me"><?php
-        if (get_option('cackle_lang') == "ru" || get_option('cackle_lang') == "uk" || get_option('cackle_lang') == "be"){
-            echo "Социальные комментарии ";
-        }
-        else {
-            echo "Social comments ";
-        }
-        ?><b style="color:#4FA3DA">Cackl</b><b style="color:#F65077">e</b></a>
-    <?php }} ?>
+
+    <?php } ?>
     <?php if ($api_id == ''): ?>API ID not specified<?php endif; ?>
