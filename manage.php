@@ -32,7 +32,7 @@ function cackle_options() {
     <form method="post">
 
         <p>Please, <?php if ($oldapiId) {
-            echo '<a href="http://cackle.ru/site/' . $oldapiId . '/wordpress" target="_blank">click here</a>';
+            echo '<a href="http://cackle.ru/site/' . $oldapiId . '/comment/cms/wordpress" target="_blank">click here</a>';
         } else {
             echo '<a href="http://cackle.ru/site/new" target="_blank">register</a>';
         }
