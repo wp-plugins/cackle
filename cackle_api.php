@@ -12,7 +12,7 @@ class CackleAPI
         $this->accountApiKey = $accountApiKey = get_option('cackle_accountApiKey');
         $this->siteApiKey = $siteApiKey = get_option('cackle_siteApiKey');
         $this->cackle_last_modified = $this->cackle_get_param('cackle_last_modified', 0);
-        $this->get_url = $get_url = "http://cackle.me/api/2.0/comment/list.json?id=$siteId&accountApiKey=$accountApiKey&siteApiKey=$siteApiKey";
+        $this->get_url = $get_url = "http://cackle.me/api/3.0/comment/list.json?id=$siteId&accountApiKey=$accountApiKey&siteApiKey=$siteApiKey";
         $this->get_url2 = "http://cackle.me/api/2.0/site/info.json?id=$siteId&accountApiKey=$accountApiKey&siteApiKey=$siteApiKey";
         $this->update_url = $update_url = "http://cackle.me/api/wp115/setup?accountApiKey=$accountApiKey&siteApiKey=$siteApiKey";
         $this->last_error = null;
@@ -43,7 +43,7 @@ class CackleAPI
         curl_setopt($ch, CURLOPT_URL, $host);
 
         curl_setopt($ch, CURLOPT_USERAGENT, "Mozilla/5.0 (Windows; U; Windows NT 5.1; en-US; rv:1.8.1.6) Gecko/20070725 Firefox/2.0.0.6");
-        curl_setopt($ch, CURLOPT_TIMEOUT, 60);
+        curl_setopt($ch, CURLOPT_TIMEOUT, 5);
         curl_setopt($ch, CURLOPT_FOLLOWLOCATION, 1);
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
         curl_setopt($ch, CURLOPT_ENCODING, "gzip, deflate");
@@ -60,49 +60,7 @@ class CackleAPI
         return $result;
 
 
-        /*
-        $postdata = http_build_query(
-            array(
-                'id' =>$this->siteId,
-                'accountApiKey' => $this->accountApiKey,
-                'siteApiKey' => $this->siteApiKey,
-                'modified' => $cackle_last_modified,
-                'page' => $cackle_page,
-                'size' => 2
-            )
-        );
-        $opts = array('http' =>
-        array(
-            'method'  => 'GET',
-            'header'  =>
-                'Accept-Encoding: gzip, deflate, sdch' . "\r\n" .
-                'Content-type: application/x-www-form-urlencoded; charset=utf-8' . "\r\n"
 
-       //     'content' => ''
-        )
-        );
-
-        $context  = stream_context_create($opts);
-
-        $response = file_get_contents($this->get_url2 . "&modified=" . $cackle_last_modified . "&page=" . $cackle_page . "&size=2", false, $context);
-        return $response;
-        /*
-
-    /*
-
-        $http = new WP_Http();
-        $import_response = $http->request(
-                $c=$this->get_url . "&modified=" . $cackle_last_modified . "&page=" . $cackle_page . "&size=2",
-            array(
-                'headers' => array("Accept-Encoding" => "gzip,deflate,sdch")
-            )
-       );
-        if ($import_response instanceof WP_Error){
-            return NULL;
-        }
-        else {
-            return $import_response["body"];
-        }  **/
     }
 
     function update_comments($update_request)

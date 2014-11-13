@@ -34,7 +34,7 @@ function cackle_options() {
         <p>Please, <?php if ($oldapiId) {
             echo '<a href="http://cackle.ru/site/' . $oldapiId . '/comment/cms/wordpress" target="_blank">click here</a>';
         } else {
-            echo '<a href="http://cackle.ru/site/new" target="_blank">register</a>';
+            echo '<a href="http://admin.cackle.me/account/register" target="_blank">register</a>';
         }
             echo ' to obtain your Site ID, Account API Key, Site API Key. </p>'
             ?>
@@ -129,9 +129,19 @@ $show_advanced = (isset($_GET['t']) && $_GET['t'] == 'adv');
             <p style="float: left; font-size: 13px; font-weight: bold; line-height: 30px; padding-left: 13px;">comments
                 platform that helps your website's audience communicate through social networks.</p>
 
-            <iframe
-                    src="http://cackle.me/site/comments"
-                    style="width: 100%; height: 80%; min-height: 600px;"></iframe>
+            <div id="mc-comment-admin"></div>
+            <script type="text/javascript">
+                cackle_widget = window.cackle_widget || [];
+                cackle_widget.push({widget: 'CommentAdmin'});
+                (function() {
+                    var mc = document.createElement('script');
+                    mc.type = 'text/javascript';
+                    mc.async = true;
+                    mc.src = ('https:' == document.location.protocol ? 'https' : 'http') + '://cackle.me/widget.js';
+                    var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(mc, s.nextSibling);
+                })();
+            </script>
+
         </div>
         <!-- Advanced options -->
 

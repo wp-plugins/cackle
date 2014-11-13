@@ -1,4 +1,13 @@
 <?php
+if (version_compare(get_bloginfo('version'), '4.0', '>=')) {
+?>
+    <style>
+    #mc-container{
+        padding: 10px;
+    }
+</style>
+<?php
+}
 function is_comments_close() {
     global $wpdb;
     global $post;

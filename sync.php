@@ -3,39 +3,44 @@ class Sync {
     function Sync() {
     }
 
-    function init($a = "") {
+    function has_next ($size_comments, $size_pagination = 100) {
+        return $size_comments == $size_pagination;
+    }
+    function push_next_comments($mode,$comment_last_modified, $size_comments){
+        $apix = new CackleAPI();
+        $i = 1;
+        while($this->has_next($size_comments)){
+            if ($mode=="all_comments"){
+                $response = $apix->get_comments(0,$i) ;
+            }
+            else{
+                $response = $apix->get_comments($comment_last_modified,$i) ;
+            }
+            $size_comments = $this->push_comments($response); // get comment from array and insert it to wp db
+            $i++;
+        }
+    }
+    function init($mode = "") {
+
         $apix = new CackleAPI();
         $cackle_last_modified = $apix->cackle_get_param("cackle_last_modified",0);
 
-        if ($a == "all_comments") {
-            $response1 = $apix->get_comments(0);
+        if ($mode == "all_comments") {
+            $response = $apix->get_comments(0);
         }
         else {
-            $response1 = $apix->get_comments($cackle_last_modified);
+            $response = $apix->get_comments($cackle_last_modified);
         }
         //get comments from Cackle Api for sync
-        if ($response1==NULL){
+        if ($response==NULL){
             return false;
         }
-        $response_size = $this->get_one_comm($response1); // get comment from array and insert it to wp db
-        $totalPages = $this->cackle_json_decodes($response1);
-        $totalPages = $totalPages['comments']['totalPages'];
-        if ($totalPages > 1) {
+        $size_comments = $this->push_comments($response); // get comment from array and insert it to wp db, and return size
 
-            for ($i=1; $i < $totalPages; $i++ ){
-                $apix = new CackleAPI();
-                if ($a=="all_comments"){
-                   $response2 = $apix->get_comments(0,$i) ;
-                }
-                else{
-
-                    $response2 = $apix->get_comments($cackle_last_modified,$i) ;
-                }
-                //$response2 = $apix->get_comments(($a=="all_comments") ? 0 : cackle_get_param("cackle_last_modified",0),$i);
-                //get comments from Cackle Api for sync
-                $response_size = $this->get_one_comm($response2); // get comment from array and insert it to wp db
-            }
+        if ($this->has_next($size_comments)) {
+            $this->push_next_comments($mode,$cackle_last_modified, $size_comments);
         }
+
         return "success";
     }
 
@@ -54,10 +59,10 @@ class Sync {
      */
 
 
-    function get_one_comm($response) {
+    function push_comments($response) {
         $apix = new CackleAPI();
         $obj = $this->cackle_json_decodes($response,true);
-        $obj = $obj['comments']['content'];
+        $obj = $obj['comments'];
         $comments_size = count($obj);
         if ($comments_size != 0){
             foreach ($obj as $comment) {
