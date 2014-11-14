@@ -111,10 +111,10 @@ class Sync {
     function insert_comm($comment, $status) {
         $apix = new CackleAPI();
         global $wpdb;
-        if ($this->startsWith($comment['channel'], 'http')) {
-            $postid = url_to_postid($comment['channel']);
+        if ($this->startsWith($comment['chan']['channel'], 'http')) {
+            $postid = url_to_postid($comment['chan']['channel']);
         } else {
-            $postid = $comment['channel'];
+            $postid = $comment['chan']['channel'];
         }
         if ($comment['author'] != null) {
             $comment_author = $comment['author']['name'];

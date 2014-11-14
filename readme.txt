@@ -282,3 +282,7 @@ Answer: You need to add a function in comment_template single.php of your theme.
 * Changed admin from iframe to widget
 * Some css fix for default wordpress theme in wp 4.0
 
+= 4.04 =
+* Bug fix in synchronization
+* Urgent update!!! Please go to plugin settings and click by 'ReSyncComments' button!!
+
