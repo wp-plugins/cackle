@@ -32,9 +32,9 @@ function cackle_options() {
     <form method="post">
 
         <p>Please, <?php if ($oldapiId) {
-            echo '<a href="http://cackle.ru/site/' . $oldapiId . '/comment/cms/wordpress" target="_blank">click here</a>';
+            echo '<a href="http://admin.cackle.me/admin/comment/' . $oldapiId . '/install" target="_blank">click here</a>';
         } else {
-            echo '<a href="http://admin.cackle.me/account/register" target="_blank">register</a>';
+            echo '<a href="http://admin.cackle.me/account/register?demo=[{%22type%22:%22comment%22,%22period%22:12}]&lang=ru" target="_blank">register</a>';
         }
             echo ' to obtain your Site ID, Account API Key, Site API Key. </p>'
             ?>

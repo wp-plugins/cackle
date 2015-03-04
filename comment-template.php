@@ -39,6 +39,7 @@ function get_avatar_path($id) {
     return $avatar_src;
 }
 
+
 function cackle_auth() {
     global $current_user;
     get_currentuserinfo();
@@ -85,7 +86,7 @@ if (!is_comments_close()) {
             <div id="cackle-comment-message-<?php echo comment_ID(); ?>"
                  class="cackle-comment-message"><?php echo wp_filter_kses(comment_text()); ?></div>
         </div><?php } ?>
-
+<div class="comments-area">
     <div id="mc-container">
         <div id="mc-content">
 
@@ -110,7 +111,7 @@ if (!is_comments_close()) {
                 <?php } ?>
         </div>
     </div>
-
+</div>
 
     <script type="text/javascript">
         cackle_widget = window.cackle_widget || [];

@@ -60,6 +60,7 @@ class Sync {
 
 
     function push_comments($response) {
+        global $wpdb;
         $apix = new CackleAPI();
         $obj = $this->cackle_json_decodes($response,true);
         $obj = $obj['comments'];
@@ -67,7 +68,12 @@ class Sync {
         if ($comments_size != 0){
             foreach ($obj as $comment) {
                 if ($comment['id'] > get_option('cackle_last_comment', 0)) {
-                    $this->insert_comm($comment, $this->comment_status_decoder($comment));
+                    $comment_id = $comment['id'];
+                    $count = $wpdb->get_results($wpdb->prepare("SELECT count(comment_ID) as count from $wpdb->comments  WHERE comment_agent = %s", "Cackle:{$comment_id}"));
+                    if(isset($count[0]->count)&&$count[0]->count==0){
+                        $this->insert_comm($comment, $this->comment_status_decoder($comment));
+                    }
+
                 } else {
                     // if ($comment['modified'] > $apix->cackle_get_param('cackle_last_modified', 0)) {
                     $this->update_comment_status($comment['id'], $this->comment_status_decoder($comment), $comment['modified'], $comment['message'] );
