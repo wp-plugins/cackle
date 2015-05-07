@@ -8,7 +8,7 @@ Author: Cackle
 Author URI: http://cackle.me
 */
 define('CACKLE_PLUGIN_URL', WP_CONTENT_URL . '/plugins/' . cackle_plugin_basename(__FILE__));
-define('CACKLE_VERSION', '4.06');
+define('CACKLE_VERSION', '4.07');
 define('CACKLE_SCHEDULE_COMMON', 120);
 define('CACKLE_SCHEDULE_CHANNEL', 120);
 
@@ -406,7 +406,7 @@ function cackle_request_handler() {
                             $response = "success";
                         }
                             else{
-                                $comments=[];
+                                $comments=array();
                                 foreach ($comms as $comment) {
                                     $created=new DateTime($comment->comment_date);
                                     $comments[]=Array(
