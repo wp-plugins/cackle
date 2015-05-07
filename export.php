@@ -21,6 +21,7 @@ function cackle_export_wxr_missing_parents($categories) {
 function cackle_export_wxr_cdata($string) {
     if (seems_utf8($string) == false)
         $string = utf8_encode($string);
+    $string = iconv('cp1251', 'utf-8', $string);
     $string = '<![CDATA[' . str_replace(']]>', ']]]]><![CDATA[>', $string) . ']]>';
     return $string;
 }

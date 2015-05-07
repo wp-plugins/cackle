@@ -6,39 +6,40 @@ class Sync {
     function has_next ($size_comments, $size_pagination = 100) {
         return $size_comments == $size_pagination;
     }
-    function push_next_comments($mode,$comment_last_modified, $size_comments){
+    function push_next_comments($mode, $size_comments,$channel,$cackle_last_modified){
         $apix = new CackleAPI();
         $i = 1;
         while($this->has_next($size_comments)){
+
             if ($mode=="all_comments"){
                 $response = $apix->get_comments(0,$i) ;
             }
             else{
-                $response = $apix->get_comments($comment_last_modified,$i) ;
+                $response = $apix->get_comments($cackle_last_modified,$channel,$i) ;
             }
-            $size_comments = $this->push_comments($response); // get comment from array and insert it to wp db
+            $size_comments = $this->process_comments($response, $channel); // get comment from array and insert it to wp db
             $i++;
         }
     }
-    function init($mode = "") {
+    function init($channel,$mode = "") {
 
         $apix = new CackleAPI();
-        $cackle_last_modified = $apix->cackle_get_param("cackle_last_modified",0);
+        $cackle_last_modified = $apix->get_last_modified_by_channel($channel,0);
 
         if ($mode == "all_comments") {
-            $response = $apix->get_comments(0);
+            $response = $apix->get_comments(0,$channel);
         }
         else {
-            $response = $apix->get_comments($cackle_last_modified);
+            $response = $apix->get_comments($cackle_last_modified,$channel);
         }
         //get comments from Cackle Api for sync
         if ($response==NULL){
             return false;
         }
-        $size_comments = $this->push_comments($response); // get comment from array and insert it to wp db, and return size
+        $size_comments = $this->process_comments($response, $channel); // get comment from array and insert it to wp db, and return size
 
         if ($this->has_next($size_comments)) {
-            $this->push_next_comments($mode,$cackle_last_modified, $size_comments);
+            $this->push_next_comments($mode,$size_comments, $channel,$cackle_last_modified);
         }
 
         return "success";
@@ -59,7 +60,7 @@ class Sync {
      */
 
 
-    function push_comments($response) {
+    function process_comments($response,$channel) {
         global $wpdb;
         $apix = new CackleAPI();
         $obj = $this->cackle_json_decodes($response,true);
@@ -67,7 +68,7 @@ class Sync {
         $comments_size = count($obj);
         if ($comments_size != 0){
             foreach ($obj as $comment) {
-                if ($comment['id'] > get_option('cackle_last_comment', 0)) {
+                if ($comment['id'] > $apix->get_last_comment_by_channel($channel,0)){
                     $comment_id = $comment['id'];
                     $count = $wpdb->get_results($wpdb->prepare("SELECT count(comment_ID) as count from $wpdb->comments  WHERE comment_agent = %s", "Cackle:{$comment_id}"));
                     if(isset($count[0]->count)&&$count[0]->count==0){
@@ -76,7 +77,7 @@ class Sync {
 
                 } else {
                     // if ($comment['modified'] > $apix->cackle_get_param('cackle_last_modified', 0)) {
-                    $this->update_comment_status($comment['id'], $this->comment_status_decoder($comment), $comment['modified'], $comment['message'] );
+                    $this->update_comment_status($comment['id'], $this->comment_status_decoder($comment), $comment['modified'], $comment['message'], $channel );
                     // }
                 }
             }
@@ -91,7 +92,7 @@ class Sync {
     }
 
     function comment_status_decoder($comment) {
-        $status;
+
         if (strtolower($comment['status']) == "approved") {
             $status = 1;
         } elseif (strtolower($comment['status'] == "pending") || strtolower($comment['status']) == "rejected") {
@@ -104,14 +105,16 @@ class Sync {
         return $status;
     }
 
-    function update_comment_status($comment_id, $status, $modified, $comment_content) {
+    function update_comment_status($comment_id, $status, $modified, $comment_content,$channel) {
         $apix=new CackleAPI();
         global $wpdb;
         $wpdb->query($wpdb->prepare("UPDATE $wpdb->comments SET comment_approved = '$status' WHERE comment_agent = %s", "Cackle:{$comment_id}"));
         $wpdb->query($wpdb->prepare("UPDATE $wpdb->comments SET comment_content = '$comment_content' WHERE comment_agent = %s", "Cackle:{$comment_id}"));
-        if ($modified > $apix->cackle_get_param('cackle_last_modified', 0)) {
-            $apix->cackle_set_param('cackle_last_modified', $modified); //saving last comment id to database
+        if ($modified > $apix->get_last_modified_by_channel($channel,0)) {
+            $apix->set_last_modified_by_channel($channel, $modified);
+
         }
+
     }
 
     function insert_comm($comment, $status) {
@@ -122,12 +125,22 @@ class Sync {
         } else {
             $postid = $comment['chan']['channel'];
         }
-        if ($comment['author'] != null) {
-            $comment_author = $comment['author']['name'];
-            $comment_author_email = $comment['author']['email'];
-            $comment_author_url = $comment['author']['www'];
+        if (isset($comment['author']) && $comment['author'] != null) {
+            $comment_author = isset($comment['author']['name']) ? $comment['author']['name'] : "";
+            $comment_author_email = isset($comment['author']['email']) ? $comment['author']['email'] : "";
+            $comment_author_url = isset($comment['author']['www']) ? $comment['author']['www'] : "" ;
+            if($comment['author']['provider']=='sso'){
+                if(isset($comment['author']['openId'])){
+                    $openId = $comment['author']['openId'];
+                    $user_id = (int)substr($openId, strpos($openId, "_") + 1);
+                }
+
+            }
+            else{
+                $user_id=0;
+            }
         } else {
-            $comment_author = $comment['anonym']['name'];
+            $comment_author = isset($comment['anonym']['name']) ? $comment['anonym']['name'] : "";
             if(!isset($comment['anonym']['email'])){
                 $comment_author_email = NULL;
             }
@@ -148,6 +161,7 @@ class Sync {
             'comment_approved' => $status,
             'comment_agent' => 'Cackle:' . $comment['id'],
             'comment_type' => '',
+            'user_id' => $user_id
         );
         $commentdata['comment_ID'] = wp_insert_comment($commentdata);
         $comment_id = $commentdata['comment_ID'];
@@ -166,9 +180,10 @@ class Sync {
                 );
             }
         }
-        update_option('cackle_last_comment', $comment['id']);
-        if ($comment['modified'] > $apix->cackle_get_param('cackle_last_modified', 0)) {
-            $apix->cackle_set_param('cackle_last_modified', $comment['modified']);
+        $apix->set_last_comment_by_channel($postid, $comment['id']);
+        if ($comment['modified'] > $apix->get_last_modified_by_channel($postid,0)) {
+            $apix->set_last_modified_by_channel($postid, $comment['modified']);
+
         }
     }
 }

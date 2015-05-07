@@ -3,12 +3,16 @@
 Plugin Name: Cackle comments
 Plugin URI: http://cackle.me
 Description: This plugin allows your website's audience communicate through social networks like Facebook, Vkontakte, Twitter, e.t.c.
-Version: 4.05
+Version: 4.06
 Author: Cackle
 Author URI: http://cackle.me
 */
 define('CACKLE_PLUGIN_URL', WP_CONTENT_URL . '/plugins/' . cackle_plugin_basename(__FILE__));
-define('CACKLE_VERSION', '2.0');
+define('CACKLE_VERSION', '4.06');
+define('CACKLE_SCHEDULE_COMMON', 120);
+define('CACKLE_SCHEDULE_CHANNEL', 120);
+
+
 require_once(dirname(__FILE__) . '/cackle_api.php');
 require_once(dirname(__FILE__) . '/sync.php');
 function cackle_manage() {
@@ -24,11 +28,68 @@ function cackle_i($text, $params = null) {
     return vsprintf(__($text, 'cackle'), $params);
 }
 
+function channel_timer($cron_time, $id){
+    $cackle_api = new CackleAPI();
+    global $wpdb;
+    if(time_is_over($cron_time,$id)){
+        $get_last_time = $wpdb->get_results($wpdb->prepare("
+                            SELECT *
+                            FROM {$wpdb->prefix}cackle_channel
+                            WHERE id = %d
+                            ORDER BY ID ASC
+                            LIMIT 1
+                            ", $id));
+        //print_r($get_last_time);die();
+        //$get_last_time = $cackle_api->cackle_get_param("last_time_" . $schedule . "_" . $_SERVER['HTTP_HOST'],0);
+        $now = time();
+        if (count($get_last_time)==0) {
+            $sql = "INSERT INTO {$wpdb->prefix}cackle_channel (id, time) VALUES (%s,%s) ON DUPLICATE KEY UPDATE time = %s";
+            $sql = $wpdb->prepare($sql,$id,$now,$now);
+            $wpdb->query($sql);
+            return $now;
+        } else {
+            $get_last_time = $get_last_time['0']->time;
+            if ($get_last_time + $cron_time > $now) {
+                return false;
+            }
+            if ($get_last_time + $cron_time < $now) {
+                $sql = "INSERT INTO {$wpdb->prefix}cackle_channel (id, time) VALUES (%s,%s) ON DUPLICATE KEY UPDATE time = %s";
+                $sql = $wpdb->prepare($sql,$id,$now,$now);
+                $wpdb->query($sql);
+                return $cron_time;
+            }
+        }
+    }
+}
+function time_is_over($cron_time, $schedule) {
+    $cackle_api = new CackleAPI();
+    $q = "last_time_" . $schedule . "_" . $_SERVER['HTTP_HOST'];
+    $get_last_time = $cackle_api->cackle_get_param($q,0);
+    $now = time();
+    if ($get_last_time == "") {
+        $q = "last_time_" . $schedule . "_" . $_SERVER['HTTP_HOST'];
+        $set_time = $cackle_api->cackle_set_param($q, $now);
+        return time();
+    } else {
+        if ($get_last_time + $cron_time > $now) {
+            return false;
+        }
+        if ($get_last_time + $cron_time < $now) {
+            $q = "last_time_" . $schedule . "_" . $_SERVER['HTTP_HOST'];
+            $set_time = $cackle_api->cackle_set_param($q, $now);
+            return $cron_time;
+        }
+    }
+
+}
+
 class cackle {
+
     function cackle() {
+
         //cackle_enabled()
         if (cackle_enabled()) {
-            wp_schedule_single_event(time() + 300, 'my_new_event'); //uncomment for debug without 5min delay
+         //   wp_schedule_single_event(time() + 10, 'my_new_event'); //uncomment for debug without 5min delay
         }
         add_filter('comments_template', array($this, 'comments_template'));
         add_filter('comments_number', array($this, 'comments_text'));
@@ -37,6 +98,11 @@ class cackle {
         add_filter('plugin_action_links', array($this, 'cackle_plugin_action_links'), 10, 2);
         add_action('admin_head', array($this, 'cackle_admin_head'));
     }
+
+
+
+
+
 
     function cackle_plugin_action_links($links, $file) {
         $plugin_file = basename(__FILE__);
@@ -67,18 +133,9 @@ class cackle {
 
     function comments_template() {
         global $wpdb;
-        //$this->do_this_in_an_hour(); //uncomment for debug without 5min delay
+        $this->do_this_in_an_hour(); //uncomment for debug without 5min delay
         if (cackle_enabled()) {
-            if ((get_option('cackle_desync', 'nosync')) != "sync2") {
-                $wpdb->query("DELETE FROM `" . $wpdb->prefix . "commentmeta` WHERE meta_key IN ('cackle_post_id', 'cackle_parent_post_id')");
-                $wpdb->query("DELETE FROM `" . $wpdb->prefix . "comments` WHERE comment_agent LIKE 'Cackle:%%'");
-                update_option('cackle_last_comment', 0);
-                update_option('cackle_last_modified', 0);
-                update_option('cackle_desync', "sync2");
-            }
-            //if (is_comments_close()){
             return dirname(__FILE__) . '/comment-template.php';
-            //}
         }
     }
 
@@ -172,48 +229,47 @@ class cackle {
                         },
                         'json'
                 );
-            }
+            };
             cackle_fire_import = function () {
                 var $ = jQuery;
                 $('#cackle_import a.button, #cackle_import_retry').unbind().click(function () {
-                    var wipe = $('#cackle_import_wipe').is(':checked');
                     $('#cackle_import').html('<p class="status"></p>');
                     $('#cackle_import .status').removeClass('cackle-import-fail').addClass('cackle-importing').html('Processing...');
-                    cackle_import_comments(wipe);
+                    cackle_import_comments();
                     return false;
                 });
             }
             cackle_import_comments = function (wipe) {
                 var $ = jQuery;
                 var status = $('#cackle_import .status');
-                var last_comment_id = status.attr('rel') || '0';
+                var import_info = (status.attr('rel') || '0|' + (new Date().getTime() / 1000)).split('|');
                 $.get(
-                        '<?php echo admin_url('index.php'); ?>',
-                        {
-                            cf_action:'import_comments',
-                            last_comment_id:last_comment_id,
-                            wipe:(wipe ? 1 : 0)
-                        },
-                        function (response) {
-                            switch (response.result) {
-                                case 'success':
-                                    status.html(response.msg).attr('rel', response.last_comment_id);
-                                    switch (response.status) {
-                                        case 'partial':
-                                            cackle_import_comments(false);
-                                            break;
-                                        case 'complete':
-                                            status.removeClass('cackle-importing').addClass('cackle-imported');
-                                            break;
-                                    }
-                                    break;
-                                case 'fail':
-                                    status.parent().html(response.msg);
-                                    cackle_fire_import();
-                                    break;
-                            }
-                        },
-                        'json'
+                    '<?php echo admin_url('index.php'); ?>',
+                    {
+                        cf_action:'import_comments',
+                        post_id:import_info[0],
+                        timestamp:import_info[1]
+                    },
+                    function (response) {
+                        switch (response.result) {
+                            case 'success':
+                                status.html(response.msg).attr('rel', response.post_id + '|' + response.timestamp);
+                                switch (response.status) {
+                                    case 'partial':
+                                        cackle_import_comments();
+                                        break;
+                                    case 'complete':
+                                        status.removeClass('cackle-importing').addClass('cackle-imported');
+                                        break;
+                                }
+                                break;
+                            case 'fail':
+                                status.parent().html(response.msg);
+                                cackle_fire_import();
+                                break;
+                        }
+                    },
+                    'json'
                 );
             }
         </script>
@@ -223,9 +279,14 @@ class cackle {
 
     function do_this_in_an_hour() {
         if (version_compare(get_bloginfo('version'), '2.9', '>=')) {
-            global $post;
-            $sync = new Sync();
-            $response = $sync->init();
+            if (isset($_GET['schedule']) && $_GET['schedule'] == 'reviews') {
+                global $post;
+                $sync = new Sync();
+                if (channel_timer(CACKLE_SCHEDULE_CHANNEL, $post->ID)) {
+                    $sync->init($post->ID);
+                }
+            }
+
         }
     }
 
@@ -274,6 +335,27 @@ add_action('wp_footer', 'cackle_output_footer_comment_js');
 function cackle_init() {
     $a = new cackle;
 }
+function get_comment_status($status){
+    if ($status == "1") {
+        $status = "approved";
+    } elseif ($status == "0") {
+        $status = "pending";
+    } elseif ($status == "spam") {
+        $status = "spam";
+    } elseif ($status == "trash") {
+        $status = "deleted";
+    }
+    return $status;
+}
+
+function cackle_export_utf($string) {
+
+    //$encoding = mb_detect_encoding($string, array('UTF-8', 'Windows-1251'));
+
+    //$string = iconv('cp1251', 'utf-8', $string);
+    //$string = '<![CDATA[' . str_replace(']]>', ']]]]><![CDATA[>', $string) . ']]>';
+    return $string;
+}
 
 function cackle_request_handler() {
     global $cackle_response;
@@ -319,9 +401,34 @@ function cackle_request_handler() {
                     ob_start();
                     $response = null;
                     if ($post) {
-                        require_once(dirname(__FILE__) . '/export.php');
-                        $wxr = cackle_export_wp($post);
-                        $response = $cackle_api->import_wordpress_comments($wxr, $timestamp, $eof);
+                        $comms = $wpdb->get_results($wpdb->prepare("SELECT * FROM $wpdb->comments WHERE comment_post_ID = %d AND comment_agent NOT LIKE 'Cackle:%%' order by comment_date asc", $post->ID));
+                        if(sizeof($comms)==0){
+                            $response = "success";
+                        }
+                            else{
+                                $comments=[];
+                                foreach ($comms as $comment) {
+                                    $created=new DateTime($comment->comment_date);
+                                    $comments[]=Array(
+                                        'id' => $comment->comment_ID,
+                                        'ip' => $comment->comment_author_IP,
+                                        'status' => get_comment_status($comment->comment_approved),
+                                        'msg'=> cackle_export_utf($comment->comment_content),
+                                        'created' => $created->getTimestamp()*1000,
+                                        'user' => array(
+                                            'id' => $comment->user_id,
+                                            'name' => $comment->author,
+                                            'email' => $comment->author->email
+                                        ),
+                                        'parent' => $comment->comment_parent
+                                    );
+
+                                }
+                                $response = $cackle_api->import_wordpress_comments($comments,$post,$eof);
+                                $response = json_decode($response,true);
+                                $response = (isset($response['responseApi']['status']) && $response['responseApi']['status'] == "ok" ) ? "success" : "fail";
+                            }
+
                         if (!($response == "success")) {
                             $result = 'fail';
                             $msg = '<p class="status cackle-export-fail">' . cackle_i('Sorry, something  happened with the export. Please <a href="#" id="cackle_export_retry">try again</a></p><p>If your API key has changed, you may need to reinstall Cackle (deactivate the plugin and then reactivate it). If you are still having issues, refer to the <a href="%s" onclick="window.open(this.href); return false">WordPress help page</a>.', 'http://cackle.me/help/') . '</p>';
@@ -343,33 +450,69 @@ function cackle_request_handler() {
                 break;
             case 'import_comments':
                 if (current_user_can('manage_options')) {
-                    $wpdb->query("DELETE FROM `" . $wpdb->prefix . "commentmeta` WHERE meta_key IN ('cackle_post_id', 'cackle_parent_post_id')");
-                    $wpdb->query("DELETE FROM `" . $wpdb->prefix . "comments` WHERE comment_agent LIKE 'Cackle:%%'");
-                    update_option('cackle_last_comment', 0);
-                    update_option('cackle_last_modified', 0);
-                    ob_start();
-                    $desync = new Sync();
-                    $response = $desync->init("all_comments");
-                    $debug = ob_get_clean();
-                    if (!$response) {
-                        $status = 'error';
-                        $result = 'fail';
-                        $error = $cackle_api->get_last_error();
-                        $msg = '<p class="status cackle-export-fail">' . cackle_i('There was an error downloading your comments from Cackle.') . '<br/>' . htmlspecialchars($error) . '</p>';
-                    } else {
-                        if ($response) {
-                            $status = 'complete';
-                            $msg = cackle_i('Your comments have been downloaded from Cackle and saved in your local database.');
-                        }
-                        $result = 'success';
+                    global $wpdb, $cackle_api;
+                    $timestamp = intval($_GET['timestamp']);
+                    $post_id = intval($_GET['post_id']);
+                    if($post_id==0){
+                        $wpdb->query("DELETE FROM `" . $wpdb->prefix . "commentmeta` WHERE meta_key IN ('cackle_post_id', 'cackle_parent_post_id')");
+                        $wpdb->query("DELETE FROM `" . $wpdb->prefix . "comments` WHERE comment_agent LIKE 'Cackle:%%'");
+                        $wpdb->query("DELETE FROM `" . $wpdb->prefix . "cackle_channel`");
                     }
-                    $debug = explode("\n", $debug);
-                    $response = compact('result', 'status', 'comments', 'msg', 'last_comment_id', 'debug');
+                    $post = $wpdb->get_results($wpdb->prepare("
+                            SELECT *
+                            FROM $wpdb->posts
+                            WHERE post_type != 'revision'
+                            AND post_status = 'publish'
+                            AND comment_count > 0
+                            AND ID > %d
+                            ORDER BY ID ASC
+                            LIMIT 1
+                            ", $post_id));
+                    $post = $post[0];
+                    $post_id = $post->ID;
+                    channel_timer(CACKLE_SCHEDULE_CHANNEL,$post_id);
+                    $max_post_id = $wpdb->get_var($wpdb->prepare("
+                            SELECT MAX(ID)
+                            FROM $wpdb->posts
+                            WHERE post_type != 'revision'
+                            AND post_status = 'publish'
+                            AND comment_count > 0
+                            ", $post_id));
+                    $eof = (int)($post_id == $max_post_id);
+                    if ($eof) {
+                        $status = 'complete';
+                        $msg = 'Your comments have been resynchronized!<br/>';
+                    } else {
+                        $status = 'partial';
+                        //require_once(dirname(__FILE__) . '/manage.php');
+                        $msg = cackle_i('Processed comments on post #%s&hellip;', $post_id);
+                    }
+                    $result = 'fail';
+                    ob_start();
+                    $response = null;
+                    if ($post) {
+                        $sync = new Sync();
+                        $response = $sync->init($post_id);
+                        if (!($response == "success")) {
+                            $result = 'fail';
+                            $msg = '<p class="status cackle-export-fail">' . cackle_i('Sorry, something  happened with the export. Please <a href="#" id="cackle_export_retry">try again</a></p><p>If your API key has changed, you may need to reinstall Cackle (deactivate the plugin and then reactivate it). If you are still having issues, refer to the <a href="%s" onclick="window.open(this.href); return false">WordPress help page</a>.', 'http://cackle.me/help/') . '</p>';
+                            $response = $cackle_api->get_last_error();
+                        } else {
+                            if ($eof) {
+                                $msg = cackle_i('Your comments have been synchronized with Cackle and queued for import!<br/>After exporting the comments you receive email notification', 'http://cackle.me/help/');
+                            }
+                            $result = 'success';
+                        }
+                    }
+                    //AJAX response
+                    $debug = ob_get_clean();
+                    $response = compact('result', 'timestamp', 'status', 'post_id', 'msg', 'eof', 'response', 'debug');
                     header('Content-type: text/javascript');
                     echo cf_json_encode($response);
                     die();
                 }
                 break;
+
         }
     }
 }
@@ -538,6 +681,44 @@ function cackle_activated() {
     }
 }
 
+function cackle_activate() {
+    cackle_install();
+}
+
+
+function cackle_install() {
+    //print_r('test');die();
+    global $wpdb;
+    $table_name = $wpdb->prefix . "cackle_channel";
+    if($wpdb->get_var("show tables like '$table_name'") != $table_name) {
+
+        $sql = "CREATE TABLE " . $table_name . " (
+	            id varchar(150) NOT NULL DEFAULT '',
+	            time bigint(11) NOT NULL,
+	            modified varchar(25) DEFAULT NULL,
+	            last_comment varchar(250) DEFAULT NULL,
+                PRIMARY KEY (id),
+	            UNIQUE KEY id (id)
+	        );";
+
+        require_once(ABSPATH . 'wp-admin/includes/upgrade.php');
+        $wpdb->query($sql);
+        update_option("cackle_plugin_version", CACKLE_VERSION);
+    }
+}
+function cackle_plugin_is_current_version(){
+    $version = get_option( 'cackle_plugin_version','4.05');
+    return version_compare($version, CACKLE_VERSION, '=') ? true : false;
+}
+if ( !cackle_plugin_is_current_version() ) cackle_install();
+
+//checking activation errors
+//add_action('activated_plugin', 'cackle_plugin_activation_error');
+//function cackle_plugin_activation_error() {
+//    file_put_contents( plugin_dir_path(__FILE__) . '/error_activation.html', ob_get_contents());
+//}
+
 //add_action('admin_notices', 'cackle_warning');
 add_action('init', 'cackle_request_handler');
 add_action('init', 'cackle_init');
+register_activation_hook( __FILE__, 'cackle_activate' );

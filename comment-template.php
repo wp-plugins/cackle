@@ -125,6 +125,43 @@ if (!is_comments_close()) {
             mc.src = ('https:' == document.location.protocol ? 'https' : 'http') + '://cackle.me/widget.js';
             var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(mc, s.nextSibling);
         })();
+
+        var getRequest = function () {
+            var xhr = false;
+            try {
+                xhr = new window.XMLHttpRequest();
+            }
+            catch (e1) {
+                try {
+                    xhr = new window.XDomainRequest();
+                }
+                catch (e2) {
+                    try {
+                        xhr = new window.ActiveXObject("Msxml2.XMLHTTP");
+                    }
+                    catch (e3) {
+                        try {
+                            xhr = new window.ActiveXObject("Microsoft.XMLHTTP");
+                        }
+                        catch (e4) {
+                            xhr = false;
+                        }
+                    }
+                }
+            }
+            return xhr;
+        };
+
+
+        var rs = new getRequest();
+        if(window.location.href.indexOf('?') == -1){
+            rs.open("GET", window.location.href + "?schedule=" + 'reviews&cache='+ Math.random(), true);
+        }
+        else{
+            rs.open("GET", window.location.href + "&schedule=" + 'reviews&cache='+ Math.random(), true);
+        }
+
+        rs.send();
     </script>
 
     <?php } ?>

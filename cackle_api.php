@@ -35,13 +35,10 @@ class CackleAPI
 
     }
 
-    function get_comments($cackle_last_modified, $cackle_page = 0)
-    {
-
-        $host = $this->get_url . "&modified=" . $cackle_last_modified . "&page=" . $cackle_page . "&size=100";
+    function get_comments($cackle_last_modified, $post_id, $cackle_page = 0) {
+        $host = $this->get_url . "&modified=" . $cackle_last_modified . "&page=" . $cackle_page . "&size=100&chan=" . $post_id;
         $ch = curl_init();
         curl_setopt($ch, CURLOPT_URL, $host);
-
         curl_setopt($ch, CURLOPT_USERAGENT, "Mozilla/5.0 (Windows; U; Windows NT 5.1; en-US; rv:1.8.1.6) Gecko/20070725 Firefox/2.0.0.6");
         curl_setopt($ch, CURLOPT_TIMEOUT, 5);
         curl_setopt($ch, CURLOPT_FOLLOWLOCATION, 1);
@@ -50,16 +47,70 @@ class CackleAPI
         //curl_setopt($ch,CURLOPT_ENCODING, '');
         curl_setopt($ch, CURLOPT_HTTPHEADER, array(
                 'Content-type: application/x-www-form-urlencoded; charset=utf-8',
-
-
             )
         );
+        $time_start = microtime(true);
         $result = curl_exec($ch);
+        $time_end = microtime(true);
+        $execution_time = ($time_end - $time_start)*1000;
+        //execution time of the script
+        //echo '<b>Total Execution Time:</b> '.$execution_time.' sec';
         curl_close($ch);
-
         return $result;
+    }
 
+    function get_last_comment_by_channel($channel,$default){
+        global $wpdb;
+        $result = $wpdb->get_results($wpdb->prepare("
+                            SELECT last_comment
+                            FROM {$wpdb->prefix}cackle_channel
+                            WHERE id = %s
+                            ORDER BY ID ASC
+                            LIMIT 1
+                            ", $channel));
+        if(sizeof($result)>0){
+            $result = $result[0]->last_comment;
+            if(is_null($result)){
+                return $default;
+            }
+            else{
+                return $result;
+            }
+        }
+    }
+    function set_last_comment_by_channel($channel,$last_comment){
+        global $wpdb;
+        $sql = "UPDATE {$wpdb->prefix}cackle_channel SET last_comment = %s  WHERE id = %s";
+        $sql = $wpdb->prepare($sql,$last_comment,$channel);
+        $wpdb->query($sql);
 
+    }
+
+    function get_last_modified_by_channel($channel,$default){
+        global $wpdb;
+        $result = $wpdb->get_results($wpdb->prepare("
+                            SELECT modified
+                            FROM {$wpdb->prefix}cackle_channel
+                            WHERE id = %s
+                            ORDER BY ID ASC
+                            LIMIT 1
+                            ", $channel));
+        if(sizeof($result)>0){
+            $result = $result[0]->modified;
+            if(is_null($result)){
+                return $default;
+            }
+            else{
+                return $result;
+            }
+        }
+        $res= $result;
+    }
+    function set_last_modified_by_channel($channel,$last_modified){
+        global $wpdb;
+        $sql = "UPDATE {$wpdb->prefix}cackle_channel SET modified = %s  WHERE id = %s";
+        $sql = $wpdb->prepare($sql,$last_modified,$channel);
+        $wpdb->query($sql);
 
     }
 
@@ -97,44 +148,47 @@ class CackleAPI
         return $key_response["body"];
     }
 
-    function import_wordpress_comments(&$wxr, $timestamp, $eof = true)
-    {
-        $http = new WP_Http();
-        $blog_url = get_bloginfo('wpurl');
-        $debug_site_id = $this->siteId;
-        $debug_account_key = $this->accountApiKey;
-        $debug_site_api_key = $this->siteApiKey;
-        $response = $http->request(
-            'http://import.cackle.me/api/import-wordpress-comments',
-            array(
-                'method' => 'POST',
-                'timeout' => 10,
-                'headers' => array("referer" => $blog_url, "Content-type" => "application/x-www-form-urlencoded"),
-                'body' => array(
-                    'siteId' => $this->siteId,
-                    'accountApiKey' => $this->accountApiKey,
-                    'siteApiKey' => $this->siteApiKey,
-
-                    'wxr' => $wxr,
-
-                    'eof' => (int)$eof
-                )
-            )
-        );
+    /**
+     * @param $wxr
+     * @param $timestamp
+     * @param bool $eof
+     * @return array|int
+     */
+    function import_wordpress_comments($comments, $post_id, $eof = true) {
+        $data = array(
+            'chan' => $post_id->ID,
+            'url' => 'http://cackle.ru/test',
+            'title' => 'Мой сайт | Товар 12345',
+            'comments' => $comments);
+            $postfields = json_encode($data);
+            $curl_fields = array(
+                'id' => 17216,
+                'accountApiKey' => 'YrFno4qO3keCSOKGfjPh2SCbwkD3N6qp1NtCE66hA2IuxRtETTnmWlyyH7dOnVOa',
+                'siteApiKey' => '97aCphfMrlnXIxxdYPFsF4dP4UrGc9oZVJLghOpDXneXgxIUnGdayyRzYj4az5TZ',
+                'comments' => $postfields
+            );
+            $curl=curl_init('http://cackle.me/api/3.0/comment/post.json');
+            curl_setopt($curl,CURLOPT_RETURNTRANSFER,true);
+            curl_setopt($curl,CURLOPT_POST,true);
+            curl_setopt($curl,CURLINFO_HEADER_OUT,true);
+            curl_setopt($curl,CURLOPT_POSTFIELDS,http_build_query($curl_fields));
+            $response = curl_exec($curl);
+            curl_close($curl);
         if ($response instanceof WP_Error) {
             return -1;
         }
-        if ($response['body'] == 'fail') {
+        /*if ($response['body'] == 'fail') {
             $this->api->last_error = $response['body'];
             return -1;
         }
         $data = $response['body'];
         if (!$data || $data == 'fail') {
             return -1;
-        }
+        }*/
 
-        return $data;
+        return $response;
     }
+
 
     function get_last_error()
     {
