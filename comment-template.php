@@ -160,8 +160,12 @@ if (!is_comments_close()) {
         else{
             rs.open("GET", window.location.href + "&schedule=" + 'reviews&cache='+ Math.random(), true);
         }
+        var sync_init = <?php channel_timer(CACKLE_SCHEDULE_CHANNEL, $post->ID) ?  print_r("'true';") : print_r("'false';") ;?>
 
-        rs.send();
+        if (sync_init=='true'){
+            rs.send();
+        }
+
     </script>
 
     <?php } ?>

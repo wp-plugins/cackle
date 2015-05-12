@@ -3,12 +3,12 @@
 Plugin Name: Cackle comments
 Plugin URI: http://cackle.me
 Description: This plugin allows your website's audience communicate through social networks like Facebook, Vkontakte, Twitter, e.t.c.
-Version: 4.06
+Version: 4.08
 Author: Cackle
 Author URI: http://cackle.me
 */
 define('CACKLE_PLUGIN_URL', WP_CONTENT_URL . '/plugins/' . cackle_plugin_basename(__FILE__));
-define('CACKLE_VERSION', '4.07');
+define('CACKLE_VERSION', '4.08');
 define('CACKLE_SCHEDULE_COMMON', 120);
 define('CACKLE_SCHEDULE_CHANNEL', 120);
 
@@ -201,34 +201,36 @@ class cackle {
                 var $ = jQuery;
                 var status = $('#cackle_export .status');
                 var export_info = (status.attr('rel') || '0|' + (new Date().getTime() / 1000)).split('|');
-                $.get(
-                        '<?php echo admin_url('index.php'); ?>',
-                        {
-                            cf_action:'export_comments',
-                            post_id:export_info[0],
-                            timestamp:export_info[1]
-                        },
-                        function (response) {
-                            switch (response.result) {
-                                case 'success':
-                                    status.html(response.msg).attr('rel', response.post_id + '|' + response.timestamp);
-                                    switch (response.status) {
-                                        case 'partial':
-                                            cackle_export_comments();
-                                            break;
-                                        case 'complete':
-                                            status.removeClass('cackle-exporting').addClass('cackle-exported');
-                                            break;
-                                    }
-                                    break;
-                                case 'fail':
-                                    status.parent().html(response.msg);
-                                    cackle_fire_export();
-                                    break;
-                            }
-                        },
-                        'json'
-                );
+                setTimeout( function() {
+                    $.get(
+                            '<?php echo admin_url('index.php'); ?>',
+                            {
+                                cf_action:'export_comments',
+                                post_id:export_info[0],
+                                timestamp:export_info[1]
+                            },
+                            function (response) {
+                                switch (response.result) {
+                                    case 'success':
+                                        status.html(response.msg).attr('rel', response.post_id + '|' + response.timestamp);
+                                        switch (response.status) {
+                                            case 'partial':
+                                                cackle_export_comments();
+                                                break;
+                                            case 'complete':
+                                                status.removeClass('cackle-exporting').addClass('cackle-exported');
+                                                break;
+                                        }
+                                        break;
+                                    case 'fail':
+                                        status.parent().html(response.msg);
+                                        cackle_fire_export();
+                                        break;
+                                }
+                            },
+                            'json'
+                    );
+                },5000)
             };
             cackle_fire_import = function () {
                 var $ = jQuery;
@@ -238,39 +240,41 @@ class cackle {
                     cackle_import_comments();
                     return false;
                 });
-            }
+            };
             cackle_import_comments = function (wipe) {
                 var $ = jQuery;
                 var status = $('#cackle_import .status');
                 var import_info = (status.attr('rel') || '0|' + (new Date().getTime() / 1000)).split('|');
-                $.get(
-                    '<?php echo admin_url('index.php'); ?>',
-                    {
-                        cf_action:'import_comments',
-                        post_id:import_info[0],
-                        timestamp:import_info[1]
-                    },
-                    function (response) {
-                        switch (response.result) {
-                            case 'success':
-                                status.html(response.msg).attr('rel', response.post_id + '|' + response.timestamp);
-                                switch (response.status) {
-                                    case 'partial':
-                                        cackle_import_comments();
-                                        break;
-                                    case 'complete':
-                                        status.removeClass('cackle-importing').addClass('cackle-imported');
-                                        break;
-                                }
-                                break;
-                            case 'fail':
-                                status.parent().html(response.msg);
-                                cackle_fire_import();
-                                break;
-                        }
-                    },
-                    'json'
-                );
+                setTimeout( function() {
+                    $.get(
+                        '<?php echo admin_url('index.php'); ?>',
+                        {
+                            cf_action:'import_comments',
+                            post_id:import_info[0],
+                            timestamp:import_info[1]
+                        },
+                        function (response) {
+                            switch (response.result) {
+                                case 'success':
+                                    status.html(response.msg).attr('rel', response.post_id + '|' + response.timestamp);
+                                    switch (response.status) {
+                                        case 'partial':
+                                            cackle_import_comments();
+                                            break;
+                                        case 'complete':
+                                            status.removeClass('cackle-importing').addClass('cackle-imported');
+                                            break;
+                                    }
+                                    break;
+                                case 'fail':
+                                    status.parent().html(response.msg);
+                                    cackle_fire_import();
+                                    break;
+                            }
+                        },
+                        'json'
+                    );
+                },5000)
             }
         </script>
         <?php
@@ -280,11 +284,21 @@ class cackle {
     function do_this_in_an_hour() {
         if (version_compare(get_bloginfo('version'), '2.9', '>=')) {
             if (isset($_GET['schedule']) && $_GET['schedule'] == 'reviews') {
+
                 global $post;
                 $sync = new Sync();
-                if (channel_timer(CACKLE_SCHEDULE_CHANNEL, $post->ID)) {
-                    $sync->init($post->ID);
-                }
+                $sync->init($post->ID);
+
+
+                $result = ob_get_contents();
+                $result = "success";
+                $debug = ob_get_clean();
+
+                $response = compact('result');
+                ob_end_flush();
+                header('Content-type: text/javascript');
+                echo json_encode($response);
+                die();
             }
 
         }
@@ -707,7 +721,7 @@ function cackle_install() {
     }
 }
 function cackle_plugin_is_current_version(){
-    $version = get_option( 'cackle_plugin_version','4.05');
+    $version = get_option( 'cackle_plugin_version','4.08');
     return version_compare($version, CACKLE_VERSION, '=') ? true : false;
 }
 if ( !cackle_plugin_is_current_version() ) cackle_install();
@@ -717,8 +731,14 @@ if ( !cackle_plugin_is_current_version() ) cackle_install();
 //function cackle_plugin_activation_error() {
 //    file_put_contents( plugin_dir_path(__FILE__) . '/error_activation.html', ob_get_contents());
 //}
+function cackle_schedule_handler(){
+    if (isset($_GET['schedule']) && $_GET['schedule'] == 'reviews') {
+        ob_start();
+    }
+}
 
 //add_action('admin_notices', 'cackle_warning');
+add_action('init', 'cackle_schedule_handler');
 add_action('init', 'cackle_request_handler');
 add_action('init', 'cackle_init');
 register_activation_hook( __FILE__, 'cackle_activate' );

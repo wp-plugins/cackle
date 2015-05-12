@@ -55,6 +55,7 @@ class CackleAPI
         $execution_time = ($time_end - $time_start)*1000;
         //execution time of the script
         //echo '<b>Total Execution Time:</b> '.$execution_time.' sec';
+        //var_dump($host);
         curl_close($ch);
         return $result;
     }
@@ -157,14 +158,14 @@ class CackleAPI
     function import_wordpress_comments($comments, $post_id, $eof = true) {
         $data = array(
             'chan' => $post_id->ID,
-            'url' => 'http://cackle.ru/test',
-            'title' => 'Мой сайт | Товар 12345',
+            'url' => get_permalink($post_id->ID,true),
+            'title' => $post_id->post_title,
             'comments' => $comments);
             $postfields = json_encode($data);
             $curl_fields = array(
-                'id' => 17216,
-                'accountApiKey' => 'YrFno4qO3keCSOKGfjPh2SCbwkD3N6qp1NtCE66hA2IuxRtETTnmWlyyH7dOnVOa',
-                'siteApiKey' => '97aCphfMrlnXIxxdYPFsF4dP4UrGc9oZVJLghOpDXneXgxIUnGdayyRzYj4az5TZ',
+                'id' => $this->siteId,
+                'accountApiKey' => $this->accountApiKey,
+                'siteApiKey' => $this->siteApiKey,
                 'comments' => $postfields
             );
             $curl=curl_init('http://cackle.me/api/3.0/comment/post.json');

@@ -3,7 +3,7 @@ Contributors: Denis Golovachev, Cackle
 Tags: comments, social, social comments, вконтакте, facebook, yandex
 Requires at least: 2.9.1
 Tested up to: 4.2
-Stable tag: 4.07
+Stable tag: 4.08
 
 This plugin integrates Cackle Comment System (Google+, Twitter, Facebook, VKontakte, Odnoklassniki and other) right into your website.
 
@@ -296,4 +296,8 @@ Please, send all questions to support@cackle.me.
 * Urgent update!!! Please go to plugin settings and click by 'ReSyncComments' button!!
 
 = 4.07 =
-* Fix for php 5.3
+* Some bug fix
+
+= 4.08 =
+* Export bug fix
+* Sync speed improving
