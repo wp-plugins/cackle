@@ -158,7 +158,7 @@ class CackleAPI
     function import_wordpress_comments($comments, $post_id, $eof = true) {
         $data = array(
             'chan' => $post_id->ID,
-            'url' => get_permalink($post_id->ID,true),
+            'url' => urlencode(get_permalink($post_id->ID,true)),
             'title' => $post_id->post_title,
             'comments' => $comments);
             $postfields = json_encode($data);
