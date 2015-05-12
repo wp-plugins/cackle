@@ -431,8 +431,8 @@ function cackle_request_handler() {
                                         'created' => $created->getTimestamp()*1000,
                                         'user' => array(
                                             'id' => $comment->user_id,
-                                            'name' => $comment->author,
-                                            'email' => $comment->author->email
+                                            'name' => $comment->comment_author,
+                                            'email' => $comment->comment_author_email
                                         ),
                                         'parent' => $comment->comment_parent
                                     );
