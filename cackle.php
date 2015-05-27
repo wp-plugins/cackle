@@ -3,12 +3,12 @@
 Plugin Name: Cackle comments
 Plugin URI: http://cackle.me
 Description: This plugin allows your website's audience communicate through social networks like Facebook, Vkontakte, Twitter, e.t.c.
-Version: 4.08
+Version: 4.09
 Author: Cackle
 Author URI: http://cackle.me
 */
 define('CACKLE_PLUGIN_URL', WP_CONTENT_URL . '/plugins/' . cackle_plugin_basename(__FILE__));
-define('CACKLE_VERSION', '4.08');
+define('CACKLE_VERSION', '4.09');
 define('CACKLE_SCHEDULE_COMMON', 120);
 define('CACKLE_SCHEDULE_CHANNEL', 120);
 
@@ -31,7 +31,7 @@ function cackle_i($text, $params = null) {
 function channel_timer($cron_time, $id){
     $cackle_api = new CackleAPI();
     global $wpdb;
-    if(time_is_over($cron_time,$id)){
+
         $get_last_time = $wpdb->get_results($wpdb->prepare("
                             SELECT *
                             FROM {$wpdb->prefix}cackle_channel
@@ -59,7 +59,7 @@ function channel_timer($cron_time, $id){
                 return $cron_time;
             }
         }
-    }
+
 }
 function time_is_over($cron_time, $schedule) {
     $cackle_api = new CackleAPI();
@@ -91,7 +91,7 @@ class cackle {
         if (cackle_enabled()) {
          //   wp_schedule_single_event(time() + 10, 'my_new_event'); //uncomment for debug without 5min delay
         }
-        add_filter('comments_template', array($this, 'comments_template'));
+        add_filter('comments_template', array($this, 'comments_template'),1000);
         add_filter('comments_number', array($this, 'comments_text'));
         add_action('my_new_event', array($this, 'do_this_in_an_hour')); //uncomment for debug without 5min delay
         add_action('admin_menu', array($this, 'cackle_add_pages'), 10);
@@ -280,27 +280,124 @@ class cackle {
         <?php
         }
     }
+    function check_monitor(){
+        /* Check cackle_monitor for synchronizing process
+         * Return post_id which needed to sync or -1 if not
+         */
+        $object = get_option('cackle_monitor');
 
+        if($object->mode=='by_channel'){
+            //if sync is called by pages, we need pause for 30 sec from the last sync
+            if($object->time + 30 > time()){
+                return -1;
+            }
+            if($object->status=='inprocess' && $object->time + 120 > time()){
+                //do nothing because in progress
+                return -1;
+            }
+            if($object->status=='next_page'){
+                // do sync with the same post
+                return $object->post_id;
+            }
+            if ($object->status=='finish' || $object->time + 120 < time()){
+                //get next post
+                global $wpdb;
+                $min_max_post_id = $wpdb->get_results($wpdb->prepare("
+                            SELECT MAX(ID) as max, MIN(ID) as min
+                            FROM $wpdb->posts
+                            WHERE post_type != 'revision'
+                            AND post_status = 'publish'
+                            ",1));
+                $min_max_post_id = $min_max_post_id[0];
+                $min_post_id = $min_max_post_id->min;
+                $max_post_id = $min_max_post_id->max;
+
+                if($object->post_id > $min_post_id){
+                    $current_post_id = $object->post_id;
+                    $next = $wpdb->get_results($wpdb->prepare("
+                            SELECT *
+                            FROM $wpdb->posts
+                            WHERE post_type != 'revision'
+                            AND post_status = 'publish'
+                            AND ID < %d
+                            ORDER BY ID DESC
+                            LIMIT 1
+                            ", $current_post_id));
+                    $next_post = $next[0];
+                    $next_post_id = $next_post->ID;
+                    return $next_post_id;
+                }
+                if($object->post_id <= $min_post_id){
+                    //set max because it is initial sync
+                    return  $max_post_id;
+                }
+
+
+            }
+        }
+        elseif($object->mode == 'all_comments'){
+            if($object->status=='inprogress' && $object->time + 120 > time()){
+                //don't start if all comments sync in progress
+                return -1;
+            }
+            else{
+                //we can't handle all_comments sync from here because it handles ajax requests, so
+                //we should start sync again from the max
+                global $wpdb;
+                $min_max_post_id = $wpdb->get_results($wpdb->prepare("
+                            SELECT MAX(ID) as max, MIN(ID) as min
+                            FROM $wpdb->posts
+                            WHERE post_type != 'revision'
+                            AND post_status = 'publish'
+                            ",1));
+                $min_max_post_id = $min_max_post_id[0];
+                $max_post_id = $min_max_post_id->max;
+                $object->post_id = $max_post_id;
+                $object->mode = 'by_channel';
+                update_option('cackle_monitor',$object);
+
+            }
+        }
+    }
     function do_this_in_an_hour() {
-        if (version_compare(get_bloginfo('version'), '2.9', '>=')) {
-            if (isset($_GET['schedule']) && $_GET['schedule'] == 'reviews') {
 
-                global $post;
+        try {
+        if(get_option('cackle_comments_hidewpcomnts') != 1){
+            if (version_compare(get_bloginfo('version'), '2.9', '>=')) {
+                //initialize monitor object if not exist
+                if( !get_option('cackle_monitor') ) {
+                    $object = new stdClass();
+                    $object->post_id = 0;
+                    $object->time = 0;
+                    $object->mode = "by_channel";
+                    $object->status = "finish";
+                    update_option('cackle_monitor',$object);
+                }
+                //initialize modified triger object if not exist
+
+                if(!get_option('cackle_modified_trigger')){
+                    $modified_triger = new stdClass();
+                    update_option('cackle_modified_trigger',$modified_triger);
+                }
                 $sync = new Sync();
-                $sync->init($post->ID);
+                $post_id = $this->check_monitor();
+                if($post_id != -1){
+                    channel_timer(time(),$post_id);
+                    $sync->init($post_id);
+                }
 
-
-                $result = ob_get_contents();
-                $result = "success";
-                $debug = ob_get_clean();
-
-                $response = compact('result');
-                ob_end_flush();
-                header('Content-type: text/javascript');
-                echo json_encode($response);
-                die();
+            }
+        }
+        }
+        catch (Exception $e) {
+            echo 'Caught exception: ',  $e->getMessage(), "\n";
+            function myException($exception) {
+                echo "<b>Exception:</b> " . $exception->getMessage();
             }
 
+            set_exception_handler('myException');
+
+            throw new Exception('Uncaught Exception occurred');
         }
     }
 
@@ -429,12 +526,14 @@ function cackle_request_handler() {
                                         'status' => get_comment_status($comment->comment_approved),
                                         'msg'=> cackle_export_utf($comment->comment_content),
                                         'created' => $created->getTimestamp()*1000,
-                                        'user' => array(
+                                        'user' => ($comment->user_id > 0) ? array(
                                             'id' => $comment->user_id,
-                                            'name' => $comment->author,
-                                            'email' => $comment->author->email
-                                        ),
-                                        'parent' => $comment->comment_parent
+                                            'name' => $comment->comment_author,
+                                            'email' => $comment->comment_author_email
+                                        ) : null,
+                                        'parent' => $comment->comment_parent,
+                                        'name' => ($comment->user_id == 0) ? $comment->comment_author : null,
+                                        'email' => ($comment->user_id == 0) ? $comment->comment_author_email : null
                                     );
 
                                 }
@@ -471,6 +570,25 @@ function cackle_request_handler() {
                         $wpdb->query("DELETE FROM `" . $wpdb->prefix . "commentmeta` WHERE meta_key IN ('cackle_post_id', 'cackle_parent_post_id')");
                         $wpdb->query("DELETE FROM `" . $wpdb->prefix . "comments` WHERE comment_agent LIKE 'Cackle:%%'");
                         $wpdb->query("DELETE FROM `" . $wpdb->prefix . "cackle_channel`");
+                        delete_option("cackle_monitor");
+                        delete_option("cackle_modified_trigger");
+
+                        //initialize monitor object if not exist
+                        if( !get_option('cackle_monitor') ) {
+                            $object = new stdClass();
+                            $object->post_id = 0;
+                            $object->time = 0;
+                            $object->mode = "by_channel";
+                            $object->status = "finish";
+                            update_option('cackle_monitor',$object);
+                        }
+
+                        //initialize modified triger object if not exist
+                        if(!get_option('cackle_modified_trigger')){
+                            $modified_triger = new stdClass();
+                            update_option('cackle_modified_trigger',$modified_triger);
+                        }
+
                     }
                     $post = $wpdb->get_results($wpdb->prepare("
                             SELECT *
@@ -506,13 +624,21 @@ function cackle_request_handler() {
                     $response = null;
                     if ($post) {
                         $sync = new Sync();
-                        $response = $sync->init($post_id);
+                        $response = $sync->init($post_id,'all_comments');
                         if (!($response == "success")) {
                             $result = 'fail';
                             $msg = '<p class="status cackle-export-fail">' . cackle_i('Sorry, something  happened with the export. Please <a href="#" id="cackle_export_retry">try again</a></p><p>If your API key has changed, you may need to reinstall Cackle (deactivate the plugin and then reactivate it). If you are still having issues, refer to the <a href="%s" onclick="window.open(this.href); return false">WordPress help page</a>.', 'http://cackle.me/help/') . '</p>';
                             $response = $cackle_api->get_last_error();
                         } else {
                             if ($eof) {
+                                //we need to switch monitor to by_channel
+                                $object = new stdClass();
+                                $object->mode = "by_channel";
+                                $object->post_id = 0;
+                                $object->status = 'finish';
+                                $object->time = time();
+                                update_option('cackle_monitor',$object);
+
                                 $msg = cackle_i('Your comments have been synchronized with Cackle and queued for import!<br/>After exporting the comments you receive email notification', 'http://cackle.me/help/');
                             }
                             $result = 'success';
@@ -717,11 +843,20 @@ function cackle_install() {
 
         require_once(ABSPATH . 'wp-admin/includes/upgrade.php');
         $wpdb->query($sql);
-        update_option("cackle_plugin_version", CACKLE_VERSION);
+
     }
+
+    //Delete Cackle comments for resync
+    $wpdb->query("DELETE FROM `" . $wpdb->prefix . "commentmeta` WHERE meta_key IN ('cackle_post_id', 'cackle_parent_post_id')");
+    $wpdb->query("DELETE FROM `" . $wpdb->prefix . "comments` WHERE comment_agent LIKE 'Cackle:%%'");
+    $wpdb->query("DELETE FROM `" . $wpdb->prefix . "cackle_channel`");
+    delete_option("cackle_monitor");
+    delete_option("cackle_modified_trigger");
+    update_option("cackle_plugin_version", CACKLE_VERSION);
+
 }
 function cackle_plugin_is_current_version(){
-    $version = get_option( 'cackle_plugin_version','4.08');
+    $version = get_option( 'cackle_plugin_version','4.07');
     return version_compare($version, CACKLE_VERSION, '=') ? true : false;
 }
 if ( !cackle_plugin_is_current_version() ) cackle_install();
@@ -731,14 +866,7 @@ if ( !cackle_plugin_is_current_version() ) cackle_install();
 //function cackle_plugin_activation_error() {
 //    file_put_contents( plugin_dir_path(__FILE__) . '/error_activation.html', ob_get_contents());
 //}
-function cackle_schedule_handler(){
-    if (isset($_GET['schedule']) && $_GET['schedule'] == 'reviews') {
-        ob_start();
-    }
-}
 
-//add_action('admin_notices', 'cackle_warning');
-add_action('init', 'cackle_schedule_handler');
 add_action('init', 'cackle_request_handler');
 add_action('init', 'cackle_init');
 register_activation_hook( __FILE__, 'cackle_activate' );

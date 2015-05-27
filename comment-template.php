@@ -85,26 +85,16 @@ if (!is_comments_close()) {
         <div id="cackle-comment-body-<?php echo comment_ID(); ?>" class="cackle-comment-body">
             <div id="cackle-comment-message-<?php echo comment_ID(); ?>"
                  class="cackle-comment-message"><?php echo wp_filter_kses(comment_text()); ?></div>
-        </div><?php } ?>
+        </div>
+<?php } ?>
 <div class="comments-area">
     <div id="mc-container">
         <div id="mc-content">
 
             <?php
-            if (get_option('cackle_comments_hidewpcomnts') != 1) {
-                if (get_comment_pages_count() > 1 && get_option('page_comments')): // Are there comments to navigate through?
-                    ?>
-                    <div class="navigation">
-                        <div class="nav-previous"><?php previous_comments_link(cackle_i('<span class="meta-nav">&larr;</span> Older Comments')); ?></div>
-                        <div class="nav-next"><?php next_comments_link(cackle_i('Newer Comments <span class="meta-nav">&rarr;</span>')); ?></div>
-                    </div> <!-- .navigation -->
-                    <?php endif; // check for comment navigation ?>
-
+            if (get_option('cackle_comments_hidewpcomnts') != 1) { ?>
                 <ul id="cackle-comments">
                     <?php
-                    /* Loop through and list the comments. Tell wp_list_comments()
-                     * to use dsq_comment() to format the comments.
-                     */
                     wp_list_comments(array('callback' => 'cackle_comment'));
                     ?>
                 </ul>
@@ -113,9 +103,9 @@ if (!is_comments_close()) {
     </div>
 </div>
 
-    <script type="text/javascript">
-        cackle_widget = window.cackle_widget || [];
-        cackle_widget.push({widget: 'Comment', id: '<?php echo $api_id?>', channel: '<?php echo $post->ID?>',
+<script type="text/javascript">
+    cackle_widget = window.cackle_widget || [];
+    cackle_widget.push({widget: 'Comment', id: '<?php echo $api_id?>', channel: '<?php echo $post->ID?>',
     <?php if (get_option('cackle_sso') == 1) : ?> ssoAuth: '<?php print_r(cackle_auth()) ?>' <?php endif;?>   });
         document.getElementById('mc-container').innerHTML = '';
         (function() {
@@ -125,48 +115,7 @@ if (!is_comments_close()) {
             mc.src = ('https:' == document.location.protocol ? 'https' : 'http') + '://cackle.me/widget.js';
             var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(mc, s.nextSibling);
         })();
+</script>
 
-        var getRequest = function () {
-            var xhr = false;
-            try {
-                xhr = new window.XMLHttpRequest();
-            }
-            catch (e1) {
-                try {
-                    xhr = new window.XDomainRequest();
-                }
-                catch (e2) {
-                    try {
-                        xhr = new window.ActiveXObject("Msxml2.XMLHTTP");
-                    }
-                    catch (e3) {
-                        try {
-                            xhr = new window.ActiveXObject("Microsoft.XMLHTTP");
-                        }
-                        catch (e4) {
-                            xhr = false;
-                        }
-                    }
-                }
-            }
-            return xhr;
-        };
-
-
-        var rs = new getRequest();
-        if(window.location.href.indexOf('?') == -1){
-            rs.open("GET", window.location.href + "?schedule=" + 'reviews&cache='+ Math.random(), true);
-        }
-        else{
-            rs.open("GET", window.location.href + "&schedule=" + 'reviews&cache='+ Math.random(), true);
-        }
-        var sync_init = <?php channel_timer(CACKLE_SCHEDULE_CHANNEL, $post->ID) ?  print_r("'true';") : print_r("'false';") ;?>
-
-        if (sync_init=='true'){
-            rs.send();
-        }
-
-    </script>
-
-    <?php } ?>
-    <?php if ($api_id == ''): ?>API ID not specified<?php endif; ?>
+<?php } ?>
+<?php if ($api_id == ''): ?>API ID not specified<?php endif; ?>

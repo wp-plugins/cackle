@@ -35,8 +35,21 @@ class CackleAPI
 
     }
 
-    function get_comments($cackle_last_modified, $post_id, $cackle_page = 0) {
-        $host = $this->get_url . "&modified=" . $cackle_last_modified . "&page=" . $cackle_page . "&size=100&chan=" . $post_id;
+    /**
+     * @param $cackle_last
+     * @param $post_id
+     * @param int $cackle_page
+     * @return mixed
+     */
+    function get_comments($criteria, $cackle_last, $post_id, $cackle_page = 0) {
+        //$time_start = microtime(true);
+        if ($criteria =='last_comment'){
+            $host = $this->get_url . "&commentId=" . $cackle_last  . "&size=100&chan=" . $post_id;
+        }
+        if ($criteria =='last_modified'){
+            $host = $this->get_url . "&modified=" . $cackle_last . "&page=" . $cackle_page . "&size=100&chan=" . $post_id;
+        }
+
         $ch = curl_init();
         curl_setopt($ch, CURLOPT_URL, $host);
         curl_setopt($ch, CURLOPT_USERAGENT, "Mozilla/5.0 (Windows; U; Windows NT 5.1; en-US; rv:1.8.1.6) Gecko/20070725 Firefox/2.0.0.6");
@@ -49,14 +62,15 @@ class CackleAPI
                 'Content-type: application/x-www-form-urlencoded; charset=utf-8',
             )
         );
-        $time_start = microtime(true);
+
         $result = curl_exec($ch);
-        $time_end = microtime(true);
-        $execution_time = ($time_end - $time_start)*1000;
-        //execution time of the script
-        //echo '<b>Total Execution Time:</b> '.$execution_time.' sec';
-        //var_dump($host);
+
         curl_close($ch);
+        //$trace=debug_backtrace();
+        //$function = $trace[0]["function"];
+        //$mess='Function: ' . $function . ' execution_time' . (microtime(true) - $time_start)*1000 .PHP_EOL;
+        //file_put_contents('execution_time.txt', $mess, FILE_APPEND);
+
         return $result;
     }
 
@@ -80,14 +94,24 @@ class CackleAPI
         }
     }
     function set_last_comment_by_channel($channel,$last_comment){
+        //$time_start = microtime(true);
         global $wpdb;
         $sql = "UPDATE {$wpdb->prefix}cackle_channel SET last_comment = %s  WHERE id = %s";
         $sql = $wpdb->prepare($sql,$last_comment,$channel);
         $wpdb->query($sql);
 
-    }
+        //Profiller
+        //$trace=debug_backtrace();
+        //$function = $trace[0]["function"];
+        //$mess='Function: ' . $function . ' execution_time' . (microtime(true) - $time_start)*1000 .PHP_EOL;
+        //file_put_contents('execution_time.txt', $mess, FILE_APPEND);
 
+    }
+    function set_monitor_status($status){
+
+    }
     function get_last_modified_by_channel($channel,$default){
+        //$time_start = microtime(true);
         global $wpdb;
         $result = $wpdb->get_results($wpdb->prepare("
                             SELECT modified
@@ -99,19 +123,37 @@ class CackleAPI
         if(sizeof($result)>0){
             $result = $result[0]->modified;
             if(is_null($result)){
+
+                //$trace=debug_backtrace();
+                //$function = $trace[0]["function"];
+                //$mess='Function: ' . $function . ' execution_time' . (microtime(true) - $time_start)*1000 .PHP_EOL;
+                //file_put_contents('execution_time.txt', $mess, FILE_APPEND);
+
                 return $default;
             }
             else{
+                //$trace=debug_backtrace();
+                //$function = $trace[0]["function"];
+                //$mess='Function: ' . $function . ' execution_time' . (microtime(true) - $time_start)*1000 .PHP_EOL;
+                //file_put_contents('execution_time.txt', $mess, FILE_APPEND);
+
                 return $result;
             }
         }
         $res= $result;
     }
     function set_last_modified_by_channel($channel,$last_modified){
+        //$time_start = microtime(true);
+
         global $wpdb;
         $sql = "UPDATE {$wpdb->prefix}cackle_channel SET modified = %s  WHERE id = %s";
         $sql = $wpdb->prepare($sql,$last_modified,$channel);
         $wpdb->query($sql);
+
+        //$trace=debug_backtrace();
+        //$function = $trace[0]["function"];
+        //$mess='Function: ' . $function . ' execution_time' . (microtime(true) - $time_start)*1000 .PHP_EOL;
+        //file_put_contents('execution_time.txt', $mess, FILE_APPEND);
 
     }
 
@@ -158,7 +200,7 @@ class CackleAPI
     function import_wordpress_comments($comments, $post_id, $eof = true) {
         $data = array(
             'chan' => $post_id->ID,
-            'url' => get_permalink($post_id->ID,true),
+            'url' => urlencode(wp_get_shortlink($post_id->ID)),
             'title' => $post_id->post_title,
             'comments' => $comments);
             $postfields = json_encode($data);

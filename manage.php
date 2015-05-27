@@ -24,10 +24,13 @@ function cackle_options() {
             }
         }
     }
+    function _isCurl(){
+        return function_exists('curl_version');
+    }
 
     ?>
 <div class="wrap">
-
+    <?php !_isCurl()? print_r("Attention, curl extention is not installed") : $c=1; ?>
     <?php $oldapiId = get_option('cackle_apiId')?>
     <form method="post">
 
@@ -76,7 +79,7 @@ function cackle_options() {
             }
         }
         ?>
-        <p><?php echo __('Disallow search engines to index comments', 'cackle_comments'); ?>: <input type="checkbox"
+        <p><?php echo __('Disallow search engines to index comments(synchronization will be disabled)', 'cackle_comments'); ?>: <input type="checkbox"
                                                                                                      value="1"
                                                                                                      name="hidewpcomments" <?php if (get_option('cackle_comments_hidewpcomnts') == 1): ?>
                                                                                                      checked="checked" <?php endif;?>/>
