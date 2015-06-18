@@ -147,43 +147,15 @@ class Sync {
                         }
 
                         $commentdata = $this->insert_comm($comment, $this->comment_status_decoder($comment));
+                        $commentdata['comment_ID'] = wp_insert_comment($commentdata);
+                        $comment_id = $commentdata['comment_ID'];
+                        update_comment_meta($comment_id, 'cackle_parent_post_id', $comment['parentId']);
+                        update_comment_meta($comment_id, 'cackle_post_id', $comment['id']);
 
-                        $wpdb->insert(
-                            'wp_comments',
-                            $commentdata,
-                            array(
 
-                                '%d','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s'
-                            )
-                        );
-                        $inserted_comment_id = $wpdb->insert_id;
-                        $wpdb->insert(
-                            'wp_commentmeta',
-                            array(
-                                'comment_id' => $inserted_comment_id,
-                                'meta_key' => 'cackle_parent_post_id',
-                                'meta_value' => $comment['parentId']
-                            ),
-                            array(
-
-                                '%d','%s','%s'
-                            )
-                        );
-                        $wpdb->insert(
-                            'wp_commentmeta',
-                            array(
-                                'comment_id' => $inserted_comment_id,
-                                'meta_key' => 'cackle_post_id',
-                                'meta_value' => $comment['id']
-                            ),
-                            array(
-
-                                '%d','%s','%s'
-                            )
-                        );
 
                         //$parent_list['cackle_parent_post_id'][$inserted_comment_id]=$comment['parentId'];
-                        $parent_list['cackle_post_id'][$comment['id']]=$inserted_comment_id;
+                        $parent_list['cackle_post_id'][$comment['id']]=$comment_id;
                         if ($comment['parentId']) {
                             if (isset($parent_list['cackle_post_id'][$comment['parentId']])&& $parent_list['cackle_post_id'][$comment['parentId']] != null){
                                 $parent_id = $parent_list['cackle_post_id'][$comment['parentId']];
@@ -196,7 +168,7 @@ class Sync {
                                 "
                                 UPDATE $wpdb->comments
                                 SET comment_parent = $parent_id
-                                WHERE comment_ID = $inserted_comment_id
+                                WHERE comment_ID = $comment_id
 
                                 "
                             );
@@ -220,7 +192,7 @@ class Sync {
 
 
 
-                @mysql_query("COMMIT", $wpdb->dbh);
+            @mysql_query("COMMIT", $wpdb->dbh);
 
         }
         //$trace=debug_backtrace();
