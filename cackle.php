@@ -3,12 +3,12 @@
 Plugin Name: Cackle comments
 Plugin URI: http://cackle.me
 Description: This plugin allows your website's audience communicate through social networks like Facebook, Vkontakte, Twitter, e.t.c.
-Version: 4.09
+Version: 4.10
 Author: Cackle
 Author URI: http://cackle.me
 */
 define('CACKLE_PLUGIN_URL', WP_CONTENT_URL . '/plugins/' . cackle_plugin_basename(__FILE__));
-define('CACKLE_VERSION', '4.09');
+define('CACKLE_VERSION', '4.10');
 define('CACKLE_SCHEDULE_COMMON', 120);
 define('CACKLE_SCHEDULE_CHANNEL', 120);
 
