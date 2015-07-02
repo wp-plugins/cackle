@@ -27,8 +27,7 @@ class Sync {
         $apix = new CackleAPI();
 
 
-
-        if($mode == ""){
+        if($mode == "long"){
 
             $object = get_option('cackle_monitor');
             $object->post_id = $channel;
@@ -61,6 +60,7 @@ class Sync {
             if($this->has_next($size_comments)) {
                 $object->status = 'next_page';
                 $object->time = time();
+                $object->counter = $object->counter + 1;
                 update_option('cackle_monitor',$object);
             }
             else{
@@ -70,7 +70,59 @@ class Sync {
                 //Update monitor status
                 $object->status = 'finish';
                 $object->time = time();
-                update_option('cackle_monitor',$object);;
+                $object->counter = $object->counter + 1;
+                update_option('cackle_monitor',$object);
+            }
+        }
+        if($mode == "short"){
+
+            $object = get_option('cackle_monitor_short');
+            //$cackle_monitor need for counter counter/even
+            $cackle_monitor = get_option('cackle_monitor');
+            $object->post_id = $channel;
+            $object->status = 'inprocess';
+            $object->mode = 'by_channel';
+            $object->time = time();
+            update_option('cackle_monitor_short',$object);
+            $modified_triger = get_option('cackle_modified_trigger');
+
+            //Determine sync's criteria
+            if(!isset($modified_triger->$channel) || (isset($modified_triger->$channel) && $modified_triger->$channel == 'c') ){
+                $cackle_last_comment =  $apix->get_last_comment_by_channel($channel,0);
+                $response = $apix->get_comments('last_comment', $cackle_last_comment,$channel);
+
+            }
+
+            if(isset($modified_triger->$channel) && $modified_triger->$channel == 'm'){
+                $cackle_last_modified = $apix->get_last_modified_by_channel($channel,0);
+                $response = $apix->get_comments('last_modified',$cackle_last_modified,$channel);
+            }
+
+
+
+            //get comments from Cackle Api for sync
+            if ($response==NULL){
+                return false;
+            }
+
+            $size_comments = $this->process_comments($response, $channel); // get comment from array and insert it to wp db, and return size
+            if($this->has_next($size_comments)) {
+                $object->status = 'next_page';
+                $cackle_monitor->counter = $cackle_monitor->counter + 1;
+                $object->time = time();
+                update_option('cackle_monitor_short',$object);
+                update_option('cackle_monitor',$cackle_monitor);
+            }
+            else{
+                $modified_triger->$channel = 'm';
+                update_option('cackle_modified_trigger',$modified_triger);
+
+                //Update monitor status
+                $cackle_monitor->counter = $cackle_monitor->counter + 1;
+                $object->status = 'finish';
+                $object->time = time();
+                update_option('cackle_monitor_short',$object);
+                update_option('cackle_monitor',$cackle_monitor);
             }
         }
 
@@ -129,7 +181,7 @@ class Sync {
         global $wpdb;
         $apix = new CackleAPI();
         $obj = $this->cackle_json_decodes($response,true);
-        $obj = $obj['comments'];
+        $obj = isset($obj['comments']) ? $obj['comments'] : array();
         $comments_size = count($obj);
         if ($comments_size != 0){
             @mysql_query("BEGIN", $wpdb->dbh);
@@ -149,14 +201,14 @@ class Sync {
                         $commentdata = $this->insert_comm($comment, $this->comment_status_decoder($comment));
                         $commentdata['comment_ID'] = wp_insert_comment($commentdata);
                         $comment_id = $commentdata['comment_ID'];
-                        update_comment_meta($comment_id, 'cackle_parent_post_id', $comment['parentId']);
-                        update_comment_meta($comment_id, 'cackle_post_id', $comment['id']);
+                        //update_comment_meta($comment_id, 'cackle_parent_post_id', $comment['parentId']);
+                        //update_comment_meta($comment_id, 'cackle_post_id', $comment['id']);
 
 
 
                         //$parent_list['cackle_parent_post_id'][$inserted_comment_id]=$comment['parentId'];
                         $parent_list['cackle_post_id'][$comment['id']]=$comment_id;
-                        if ($comment['parentId']) {
+                        if (isset($comment['parentId']) && $comment['parentId']) {
                             if (isset($parent_list['cackle_post_id'][$comment['parentId']])&& $parent_list['cackle_post_id'][$comment['parentId']] != null){
                                 $parent_id = $parent_list['cackle_post_id'][$comment['parentId']];
                             }
@@ -250,11 +302,12 @@ class Sync {
         } else {
             $postid = $comment['chan']['channel'];
         }
+
         if (isset($comment['author']) && $comment['author'] != null) {
             $comment_author = isset($comment['author']['name']) ? $comment['author']['name'] : "";
             $comment_author_email = isset($comment['author']['email']) ? $comment['author']['email'] : "";
             $comment_author_url = isset($comment['author']['www']) ? $comment['author']['www'] : "" ;
-            if($comment['author']['provider']=='sso'){
+            if(isset($comment['author']['provider']) && $comment['author']['provider']=='sso'){
                 if(isset($comment['author']['openId'])){
                     $openId = $comment['author']['openId'];
                     $user_id = (int)substr($openId, strpos($openId, "_") + 1);
@@ -272,7 +325,7 @@ class Sync {
             else{
                 $comment_author_email = $comment['anonym']['email'];
             }
-            $comment_author_url = $comment['anonym']['www'];
+            $comment_author_url = isset($comment['anonym']['www']) ? $comment['anonym']['www'] : "";
         }
         $commentdata = array(
             'comment_post_ID' => $postid,
@@ -287,7 +340,7 @@ class Sync {
             'comment_approved' => $status,
             'comment_agent' => 'Cackle:' . $comment['id'],
             'comment_type' => '',
-            'user_id' => $user_id
+            'user_id' => isset($user_id) ? $user_id : 0
         );
         return $commentdata;
 

@@ -3,12 +3,12 @@
 Plugin Name: Cackle comments
 Plugin URI: http://cackle.me
 Description: This plugin allows your website's audience communicate through social networks like Facebook, Vkontakte, Twitter, e.t.c.
-Version: 4.10
+Version: 4.11
 Author: Cackle
 Author URI: http://cackle.me
 */
 define('CACKLE_PLUGIN_URL', WP_CONTENT_URL . '/plugins/' . cackle_plugin_basename(__FILE__));
-define('CACKLE_VERSION', '4.10');
+define('CACKLE_VERSION', '4.11');
 define('CACKLE_SCHEDULE_COMMON', 120);
 define('CACKLE_SCHEDULE_CHANNEL', 120);
 
@@ -284,11 +284,30 @@ class cackle {
         /* Check cackle_monitor for synchronizing process
          * Return post_id which needed to sync or -1 if not
          */
-        $object = get_option('cackle_monitor');
+
+        $cackle_monitor = get_option('cackle_monitor');
+        if(!isset($cackle_monitor->counter) || $cackle_monitor->counter > 10000) $cackle_monitor->counter = 0;
+
+        if($cackle_monitor->counter%2){
+            $mode='long';
+        }
+        else{
+            $mode='short';
+        }
+        switch ($mode) {
+            case 'long':
+                $object = get_option('cackle_monitor');
+                break;
+            case 'short':
+                $object = get_option('cackle_monitor_short');
+                break;
+
+        }
+
 
         if($object->mode=='by_channel'){
             //if sync is called by pages, we need pause for 30 sec from the last sync
-            if($object->time + 30 > time()){
+            if($object->time + 15 > time()){
                 return -1;
             }
             if($object->status=='inprocess' && $object->time + 120 > time()){
@@ -297,17 +316,31 @@ class cackle {
             }
             if($object->status=='next_page'){
                 // do sync with the same post
-                return $object->post_id;
+                $ret_object = new stdClass();
+                $ret_object->post_id=$object->post_id;
+                $ret_object->mode=$mode;
+                return $ret_object;
             }
             if ($object->status=='finish' || $object->time + 120 < time()){
                 //get next post
                 global $wpdb;
-                $min_max_post_id = $wpdb->get_results($wpdb->prepare("
+                if($mode=='long'){
+                    $min_max_post_id = $wpdb->get_results("
                             SELECT MAX(ID) as max, MIN(ID) as min
                             FROM $wpdb->posts
                             WHERE post_type != 'revision'
                             AND post_status = 'publish'
-                            ",1));
+                            ");
+                }
+                else{
+                    $min_max_post_id = $wpdb->get_results("SELECT MAX(ID) as max, MIN(ID) as min
+                            FROM ( select * from wp_posts
+                            WHERE post_type != 'revision'
+                            AND post_status = 'publish'
+                            order by post_date desc limit 50) cackle
+                            ");
+                }
+
                 $min_max_post_id = $min_max_post_id[0];
                 $min_post_id = $min_max_post_id->min;
                 $max_post_id = $min_max_post_id->max;
@@ -325,11 +358,18 @@ class cackle {
                             ", $current_post_id));
                     $next_post = $next[0];
                     $next_post_id = $next_post->ID;
-                    return $next_post_id;
+                    $ret_object = new stdClass();
+                    $ret_object->post_id=$next_post_id;
+                    $ret_object->mode=$mode;
+                    return $ret_object;
+
                 }
                 if($object->post_id <= $min_post_id){
                     //set max because it is initial sync
-                    return  $max_post_id;
+                    $ret_object = new stdClass();
+                    $ret_object->post_id=$max_post_id;
+                    $ret_object->mode=$mode;
+                    return $ret_object;
                 }
 
 
@@ -344,12 +384,12 @@ class cackle {
                 //we can't handle all_comments sync from here because it handles ajax requests, so
                 //we should start sync again from the max
                 global $wpdb;
-                $min_max_post_id = $wpdb->get_results($wpdb->prepare("
+                $min_max_post_id = $wpdb->get_results("
                             SELECT MAX(ID) as max, MIN(ID) as min
                             FROM $wpdb->posts
                             WHERE post_type != 'revision'
                             AND post_status = 'publish'
-                            ",1));
+                            ");
                 $min_max_post_id = $min_max_post_id[0];
                 $max_post_id = $min_max_post_id->max;
                 $object->post_id = $max_post_id;
@@ -371,7 +411,17 @@ class cackle {
                     $object->time = 0;
                     $object->mode = "by_channel";
                     $object->status = "finish";
+                    $object->counter = 0;
                     update_option('cackle_monitor',$object);
+                }
+
+                if( !get_option('cackle_monitor_short') ) {
+                    $object = new stdClass();
+                    $object->post_id = 0;
+                    $object->time = 0;
+                    $object->mode = "by_channel";
+                    $object->status = "finish";
+                    update_option('cackle_monitor_short',$object);
                 }
                 //initialize modified triger object if not exist
 
@@ -380,11 +430,15 @@ class cackle {
                     update_option('cackle_modified_trigger',$modified_triger);
                 }
                 $sync = new Sync();
-                $post_id = $this->check_monitor();
-                if($post_id != -1){
-                    channel_timer(time(),$post_id);
-                    $sync->init($post_id);
+
+                $monitor = $this->check_monitor();
+
+                if(is_object($monitor)){
+                    channel_timer(time(),$monitor->post_id);
+                    $sync->init($monitor->post_id,$monitor->mode);
                 }
+
+
 
             }
         }
@@ -571,6 +625,7 @@ function cackle_request_handler() {
                         $wpdb->query("DELETE FROM `" . $wpdb->prefix . "comments` WHERE comment_agent LIKE 'Cackle:%%'");
                         $wpdb->query("DELETE FROM `" . $wpdb->prefix . "cackle_channel`");
                         delete_option("cackle_monitor");
+                        delete_option("cackle_monitor_short");
                         delete_option("cackle_modified_trigger");
 
                         //initialize monitor object if not exist
@@ -580,7 +635,17 @@ function cackle_request_handler() {
                             $object->time = 0;
                             $object->mode = "by_channel";
                             $object->status = "finish";
+                            $object->counter = 0;
                             update_option('cackle_monitor',$object);
+                        }
+
+                        if( !get_option('cackle_monitor_short') ) {
+                            $object = new stdClass();
+                            $object->post_id = 0;
+                            $object->time = 0;
+                            $object->mode = "by_channel";
+                            $object->status = "finish";
+                            update_option('cackle_monitor_short',$object);
                         }
 
                         //initialize modified triger object if not exist
@@ -638,6 +703,7 @@ function cackle_request_handler() {
                                 $object->status = 'finish';
                                 $object->time = time();
                                 update_option('cackle_monitor',$object);
+                                update_option('cackle_monitor_short',$object);
 
                                 $msg = cackle_i('Your comments have been synchronized with Cackle and queued for import!<br/>After exporting the comments you receive email notification', 'http://cackle.me/help/');
                             }
@@ -851,6 +917,7 @@ function cackle_install() {
     $wpdb->query("DELETE FROM `" . $wpdb->prefix . "comments` WHERE comment_agent LIKE 'Cackle:%%'");
     $wpdb->query("DELETE FROM `" . $wpdb->prefix . "cackle_channel`");
     delete_option("cackle_monitor");
+    delete_option("cackle_monitor_short");
     delete_option("cackle_modified_trigger");
     update_option("cackle_plugin_version", CACKLE_VERSION);
 
