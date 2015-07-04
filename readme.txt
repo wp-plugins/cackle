@@ -311,3 +311,6 @@ Please, send all questions to support@cackle.me.
 
 = 4.11 =
 * sync acceleration for new posts
+
+= 4.12 =
+* Bug fix

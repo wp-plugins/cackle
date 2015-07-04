@@ -3,12 +3,12 @@
 Plugin Name: Cackle comments
 Plugin URI: http://cackle.me
 Description: This plugin allows your website's audience communicate through social networks like Facebook, Vkontakte, Twitter, e.t.c.
-Version: 4.11
+Version: 4.12
 Author: Cackle
 Author URI: http://cackle.me
 */
 define('CACKLE_PLUGIN_URL', WP_CONTENT_URL . '/plugins/' . cackle_plugin_basename(__FILE__));
-define('CACKLE_VERSION', '4.11');
+define('CACKLE_VERSION', '4.12');
 define('CACKLE_SCHEDULE_COMMON', 120);
 define('CACKLE_SCHEDULE_CHANNEL', 120);
 
@@ -376,7 +376,7 @@ class cackle {
             }
         }
         elseif($object->mode == 'all_comments'){
-            if($object->status=='inprogress' && $object->time + 120 > time()){
+            if($object->status=='inprocess' && $object->time + 120 > time()){
                 //don't start if all comments sync in progress
                 return -1;
             }
@@ -392,9 +392,16 @@ class cackle {
                             ");
                 $min_max_post_id = $min_max_post_id[0];
                 $max_post_id = $min_max_post_id->max;
+
                 $object->post_id = $max_post_id;
                 $object->mode = 'by_channel';
+
+                $object_s = get_option('cackle_monitor_short');
+                $object_s->post_id = $max_post_id;
+                $object_s->mode = 'by_channel';
+
                 update_option('cackle_monitor',$object);
+                update_option('cackle_monitor_short',$object_s);
 
             }
         }

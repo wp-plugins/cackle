@@ -128,6 +128,15 @@ class Sync {
 
         if ($mode == "all_comments") {
             $cackle_last_comment =  $apix->get_last_comment_by_channel($channel,0);
+            //we need to set all_comments mode to short and long monitor to prevent there starting
+            $object_s = get_option('cackle_monitor_short');
+
+            $object_s->post_id = $channel;
+            $object_s->status = 'inprocess';
+            $object_s->mode = 'all_comments';
+            $object_s->time = time();
+            update_option('cackle_monitor_short',$object_s);
+
             $object = get_option('cackle_monitor');
 
             $object->post_id = $channel;
