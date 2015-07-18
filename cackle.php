@@ -442,7 +442,7 @@ class cackle {
 
 
                 if(is_object($monitor)){
-                    if (isset($monitor->post_id) && $monitor->post_id == null) return;
+                    if (isset($monitor->post_id) && $monitor->post_id == null) $monitor->post_id = 1;
                     channel_timer(time(),$monitor->post_id);
                     $sync->init($monitor->post_id,$monitor->mode);
                 }
