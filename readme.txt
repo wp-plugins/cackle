@@ -3,7 +3,7 @@ Contributors: Denis Golovachev, Cackle
 Tags: comments, social, social comments, вконтакте, facebook, yandex
 Requires at least: 2.9.1
 Tested up to: 4.2.2
-Stable tag: 4.13
+Stable tag: 4.14
 
 This plugin integrates Cackle Comment System (Google+, Twitter, Facebook, VKontakte, Odnoklassniki and other) right into your website.
 
@@ -164,6 +164,9 @@ Note: If you need export local comments to Cackle you should click "export comme
 Вопрос: Я успешно активировал Wordpress плагин, но комментарии на странице не появляются. Почему?
 Ответ: Вы должны добавить функцию comment_template в single.php вашей темы. Пример: <?php comments_template( '', true ) ?>
 
+Вопрос: Автоматическая синхронизация и индексация работает некорректно. Почему?
+Ответ: Если у вас установлены кэширующие плагины, то при синхронизации возможны задержки
+
 Пожалуйста, направляйте все вопросы support@cackle.me.
 
 --------------------------------------------------------------------------
@@ -317,3 +320,6 @@ Please, send all questions to support@cackle.me.
 
 = 4.13 =
 * Revert to 4.10
+
+= 4.14 =
+* Bug fix
