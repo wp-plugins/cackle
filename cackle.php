@@ -3,12 +3,12 @@
 Plugin Name: Cackle comments
 Plugin URI: http://cackle.me
 Description: This plugin allows your website's audience communicate through social networks like Facebook, Vkontakte, Twitter, e.t.c.
-Version: 4.14
+Version: 4.15
 Author: Cackle
 Author URI: http://cackle.me
 */
 define('CACKLE_PLUGIN_URL', WP_CONTENT_URL . '/plugins/' . cackle_plugin_basename(__FILE__));
-define('CACKLE_VERSION', '4.14');
+define('CACKLE_VERSION', '4.15');
 define('CACKLE_SCHEDULE_COMMON', 120);
 define('CACKLE_SCHEDULE_CHANNEL', 120);
 
@@ -334,7 +334,7 @@ class cackle {
                 }
                 else{
                     $min_max_post_id = $wpdb->get_results("SELECT MAX(ID) as max, MIN(ID) as min
-                            FROM ( select * from wp_posts
+                            FROM ( select * from $wpdb->posts
                             WHERE post_type != 'revision'
                             AND post_status = 'publish'
                             order by post_date desc limit 50) cackle
@@ -922,12 +922,12 @@ function cackle_install() {
     }
 
     //Delete Cackle comments for resync
-    $wpdb->query("DELETE FROM `" . $wpdb->prefix . "commentmeta` WHERE meta_key IN ('cackle_post_id', 'cackle_parent_post_id')");
-    $wpdb->query("DELETE FROM `" . $wpdb->prefix . "comments` WHERE comment_agent LIKE 'Cackle:%%'");
-    $wpdb->query("DELETE FROM `" . $wpdb->prefix . "cackle_channel`");
-    delete_option("cackle_monitor");
-    delete_option("cackle_monitor_short");
-    delete_option("cackle_modified_trigger");
+    //$wpdb->query("DELETE FROM `" . $wpdb->prefix . "commentmeta` WHERE meta_key IN ('cackle_post_id', 'cackle_parent_post_id')");
+    //$wpdb->query("DELETE FROM `" . $wpdb->prefix . "comments` WHERE comment_agent LIKE 'Cackle:%%'");
+    //$wpdb->query("DELETE FROM `" . $wpdb->prefix . "cackle_channel`");
+    //delete_option("cackle_monitor");
+    //delete_option("cackle_monitor_short");
+    //delete_option("cackle_modified_trigger");
     update_option("cackle_plugin_version", CACKLE_VERSION);
 
 }

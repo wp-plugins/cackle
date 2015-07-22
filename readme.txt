@@ -3,7 +3,7 @@ Contributors: Denis Golovachev, Cackle
 Tags: comments, social, social comments, вконтакте, facebook, yandex
 Requires at least: 2.9.1
 Tested up to: 4.2.2
-Stable tag: 4.14
+Stable tag: 4.15
 
 This plugin integrates Cackle Comment System (Google+, Twitter, Facebook, VKontakte, Odnoklassniki and other) right into your website.
 
@@ -323,3 +323,6 @@ Please, send all questions to support@cackle.me.
 
 = 4.14 =
 * Bug fix
+
+= 4.15 =
+* Bug fix for the 117 sync line error
