@@ -3,7 +3,7 @@
 Plugin Name: Cackle comments
 Plugin URI: http://cackle.me
 Description: This plugin allows your website's audience communicate through social networks like Facebook, Vkontakte, Twitter, e.t.c.
-Version: 4.15
+Version: 4.16
 Author: Cackle
 Author URI: http://cackle.me
 */
@@ -191,23 +191,26 @@ class cackle {
             cackle_fire_export = function () {
                 var $ = jQuery;
                 $('#cackle_export a.button, #cackle_export_retry').unbind().click(function () {
-                    $('#cackle_export').html('<p class="status"></p>');
-                    $('#cackle_export .status').removeClass('cackle-export-fail').addClass('cackle-exporting').html('Processing...');
-                    cackle_export_comments();
+                    $('#cackle_export .current-status').html('<p class="status"></p>');
+                    $('#cackle_export .current-status .status').removeClass('cackle-export-fail').addClass('cackle-exporting').html('Processing...');
+                    var id = $(this).attr('id');
+                    cackle_export_comments(id,'isFirst');
                     return false;
                 });
-            }
-            cackle_export_comments = function () {
+            };
+            cackle_export_comments = function (id,isFirst) {
                 var $ = jQuery;
-                var status = $('#cackle_export .status');
+                var status = $('#cackle_export .status .current-status');
+                if(typeof isFirst != 'undefined' && id != 'export_stop') status.attr('rel','0|' + (new Date().getTime() / 1000));
                 var export_info = (status.attr('rel') || '0|' + (new Date().getTime() / 1000)).split('|');
-                setTimeout( function() {
+
                     $.get(
                             '<?php echo admin_url('index.php'); ?>',
                             {
                                 cf_action:'export_comments',
                                 post_id:export_info[0],
-                                timestamp:export_info[1]
+                                timestamp:export_info[1],
+                                action: id
                             },
                             function (response) {
                                 switch (response.result) {
@@ -215,43 +218,55 @@ class cackle {
                                         status.html(response.msg).attr('rel', response.post_id + '|' + response.timestamp);
                                         switch (response.status) {
                                             case 'partial':
-                                                cackle_export_comments();
+                                                var timeout = setTimeout( function() {
+                                                    cackle_export_comments('export_start');
+                                                },2000);
                                                 break;
                                             case 'complete':
+                                                status.removeClass('cackle-exporting').addClass('cackle-exported');
+                                                $("p.cackle-notcomplete").addClass('cackle-complete');
+                                                break;
+                                            case 'stop':
                                                 status.removeClass('cackle-exporting').addClass('cackle-exported');
                                                 break;
                                         }
                                         break;
                                     case 'fail':
-                                        status.parent().html(response.msg);
+                                        status.html(response.msg);
                                         cackle_fire_export();
                                         break;
                                 }
                             },
                             'json'
                     );
-                },5000)
+
             };
             cackle_fire_import = function () {
                 var $ = jQuery;
                 $('#cackle_import a.button, #cackle_import_retry').unbind().click(function () {
-                    $('#cackle_import').html('<p class="status"></p>');
-                    $('#cackle_import .status').removeClass('cackle-import-fail').addClass('cackle-importing').html('Processing...');
-                    cackle_import_comments();
+                    $('#cackle_import .current-status').html('<p class="status"></p>');
+                    $('#cackle_import .current-status .status').removeClass('cackle-import-fail').addClass('cackle-importing').html('Processing...');
+                    var id = $(this).attr('id');
+                    cackle_import_comments(id,'isFirst');
                     return false;
                 });
             };
-            cackle_import_comments = function (wipe) {
+
+            cackle_import_comments = function (id,isFirst) {
                 var $ = jQuery;
-                var status = $('#cackle_import .status');
+                var status = $('#cackle_import .status .current-status');
+
+                if(typeof isFirst != 'undefined' && id != 'sync_stop') status.attr('rel','0|' + (new Date().getTime() / 1000));
+
                 var import_info = (status.attr('rel') || '0|' + (new Date().getTime() / 1000)).split('|');
-                setTimeout( function() {
+
                     $.get(
                         '<?php echo admin_url('index.php'); ?>',
                         {
                             cf_action:'import_comments',
                             post_id:import_info[0],
-                            timestamp:import_info[1]
+                            timestamp:import_info[1],
+                            action: id
                         },
                         function (response) {
                             switch (response.result) {
@@ -259,22 +274,30 @@ class cackle {
                                     status.html(response.msg).attr('rel', response.post_id + '|' + response.timestamp);
                                     switch (response.status) {
                                         case 'partial':
-                                            cackle_import_comments();
+                                            var timeout = setTimeout( function() {
+                                                cackle_import_comments('sync_start');
+                                            },2000);
                                             break;
                                         case 'complete':
+                                            status.removeClass('cackle-importing').addClass('cackle-imported');
+                                            $("p.cackle-notcomplete").addClass('cackle-complete');
+                                            break;
+                                        case 'stop':
                                             status.removeClass('cackle-importing').addClass('cackle-imported');
                                             break;
                                     }
                                     break;
                                 case 'fail':
-                                    status.parent().html(response.msg);
-                                    cackle_fire_import();
+
+                                        status.html(response.msg);
+                                        cackle_fire_import();
+
                                     break;
                             }
                         },
                         'json'
                     );
-                },5000)
+
             }
         </script>
         <?php
@@ -408,6 +431,7 @@ class cackle {
     }
     function do_this_in_an_hour() {
 
+
         try {
         if(get_option('cackle_comments_hidewpcomnts') != 1){
             if (version_compare(get_bloginfo('version'), '2.9', '>=')) {
@@ -473,6 +497,51 @@ function cackle_output_footer_comment_js() {
     if (is_single() || is_page()){
     }
     else{
+
+    //define('ICL_LANGUAGE_CODE','de');
+    if (defined('ICL_LANGUAGE_CODE')) {
+        switch (ICL_LANGUAGE_CODE){
+            case 'uk':
+                $lang_for_cackle = 'uk';
+                break;
+            case 'be':
+                $lang_for_cackle = 'be';
+                break;
+            case 'kk':
+                $lang_for_cackle = 'kk';
+            case 'en':
+                $lang_for_cackle = 'en';
+                break;
+            case 'es':
+                $lang_for_cackle = 'es';
+                break;
+            case 'de':
+                $lang_for_cackle = 'de';
+            case 'lv':
+                $lang_for_cackle = 'lv';
+                break;
+            case 'el':
+                $lang_for_cackle = 'el';
+                break;
+            case 'fr':
+                $lang_for_cackle = 'fr';
+            case 'ro':
+                $lang_for_cackle = 'ro';
+                break;
+            case 'it':
+                $lang_for_cackle = 'it';
+                break;
+            case 'ru':
+                $lang_for_cackle = 'ru';
+                break;
+            default:
+                $lang_for_cackle = null;
+        }
+
+    } else {
+        $lang_for_cackle = null;
+    }
+
     ?>
 <script type="text/javascript">
     // <![CDATA[
@@ -490,7 +559,7 @@ function cackle_output_footer_comment_js() {
 
 
     cackle_widget = window.cackle_widget || [];
-    cackle_widget.push({widget: 'CommentCount', id: '<?php echo get_option('cackle_apiId') ?>'});
+    cackle_widget.push({widget: 'CommentCount', id: '<?php echo get_option('cackle_apiId') ?>'<?php if ($lang_for_cackle != null) : ?>, lang: '<?php print_r($lang_for_cackle) ?>'<?php endif;?>});
     (function() {
         var mc = document.createElement('script');
         mc.type = 'text/javascript';
@@ -533,16 +602,54 @@ function cackle_export_utf($string) {
 
 function cackle_request_handler() {
     global $cackle_response;
-    global $cackle_api;
     global $post;
-    global $wpdb;
+    global $wpdb, $cackle_api;
     if (!empty($_GET['cf_action'])) {
         switch ($_GET['cf_action']) {
             case 'export_comments':
                 if (current_user_can('manage_options')) {
                     $timestamp = intval($_GET['timestamp']);
+                    $action = $_GET['action'];
+                    $manual_export = get_option('cackle_manual_export','');
+                    if($manual_export==''){
+                        $manual_export = new stdClass();
+                        $manual_export->status='export';
+                    }
                     $post_id = intval($_GET['post_id']);
-                    global $wpdb, $cackle_api;
+                    
+                    switch ($action) {
+                        case 'export_start':
+                            if($manual_export->status == 'stop'){
+                                $result = 'fail';
+                                ob_start();
+                                $msg = '<div class="status cackle-export-fail error">' . cackle_i('export was stopped on processing post with id') . $post_id. '</div>';
+                                $response = compact('result', 'timestamp', 'status', 'post_id', 'msg', 'eof', 'response', 'debug');
+                                header('Content-type: text/javascript');
+                                echo cf_json_encode($response);
+                                $manual_export->status = 'export'; //revert trigger for initial state
+                                update_option('cackle_manual_export',$manual_export);
+                                die();
+
+                            }
+                            break;
+                        case 'export_continue':
+                            $post_id = $manual_export->last_post_id;
+                            $manual_export->status = 'export';
+                            update_option('cackle_manual_export',$manual_export);
+                            break;
+                        case 'export_stop':
+                            $manual_export->status = 'stop';
+                            update_option('cackle_manual_export',$manual_export);
+                            header('Content-type: text/javascript');
+                            $result = 'fail';
+                            ob_start();
+                            $msg = '<p class="status cackle-export-fail">' . cackle_i('export was stopped on processing id') . $post_id. '</p>';
+                            $response = compact('result', 'timestamp', 'status', 'post_id', 'msg', 'eof', 'response', 'debug');
+                            header('Content-type: text/javascript');
+                            echo cf_json_encode($response);
+                            break;
+
+                    }
                     $post = $wpdb->get_results($wpdb->prepare("
                             SELECT *
                             FROM $wpdb->posts
@@ -570,6 +677,8 @@ function cackle_request_handler() {
                         $status = 'partial';
                         //require_once(dirname(__FILE__) . '/manage.php');
                         $msg = cackle_i('Processed comments on post #%s&hellip;', $post_id);
+                        $manual_export->finish=false;
+                        update_option('cackle_manual_export',$manual_export);
                     }
                     $result = 'fail';
                     ob_start();
@@ -612,6 +721,8 @@ function cackle_request_handler() {
                         } else {
                             if ($eof) {
                                 $msg = cackle_i('Your comments have been sent to Cackle and queued for import!<br/>After exporting the comments you receive email notification', 'http://cackle.me/help/');
+                                $manual_export->finish=true;
+                                update_option('cackle_manual_export',$manual_export);
                             }
                             $result = 'success';
                         }
@@ -621,6 +732,8 @@ function cackle_request_handler() {
                     $response = compact('result', 'timestamp', 'status', 'post_id', 'msg', 'eof', 'response', 'debug');
                     header('Content-type: text/javascript');
                     echo cf_json_encode($response);
+                    $manual_export->last_post_id=$post_id;
+                    update_option('cackle_manual_export',$manual_export);
                     die();
                 }
                 break;
@@ -628,7 +741,50 @@ function cackle_request_handler() {
                 if (current_user_can('manage_options')) {
                     global $wpdb, $cackle_api;
                     $timestamp = intval($_GET['timestamp']);
+                    $action = $_GET['action'];
+                    $manual_sync = get_option('cackle_manual_sync','');
+                    if($manual_sync==''){
+                        $manual_sync = new stdClass();
+                        $manual_sync->status='sync';
+                    }
                     $post_id = intval($_GET['post_id']);
+                    switch ($action) {
+                        case 'sync_start':
+                            if($manual_sync->status == 'stop'){
+                                $result = 'fail';
+                                ob_start();
+                                $msg = '<div class="status cackle-export-fail error">' . cackle_i('Sync was stopped on processing post with id') . $post_id. '</div>';
+                                $response = compact('result', 'timestamp', 'status', 'post_id', 'msg', 'eof', 'response', 'debug');
+                                header('Content-type: text/javascript');
+                                echo cf_json_encode($response);
+                                $manual_sync->status = 'sync'; //revert trigger for initial state
+                                update_option('cackle_manual_sync',$manual_sync);
+                                die();
+
+                            }
+
+
+
+                            break;
+                        case 'sync_continue':
+                            $post_id = $manual_sync->last_post_id;
+                            $manual_sync->status = 'sync';
+                            update_option('cackle_manual_sync',$manual_sync);
+                            break;
+                        case 'sync_stop':
+                            $manual_sync->status = 'stop';
+                            update_option('cackle_manual_sync',$manual_sync);
+                            header('Content-type: text/javascript');
+                            $result = 'fail';
+                            ob_start();
+                            $msg = '<p class="status cackle-export-fail">' . cackle_i('Sync was stopped on processing id') . $post_id. '</p>';
+                            $response = compact('result', 'timestamp', 'status', 'post_id', 'msg', 'eof', 'response', 'debug');
+                            header('Content-type: text/javascript');
+                            echo cf_json_encode($response);
+                            break;
+
+                    }
+
                     if($post_id==0){
                         $wpdb->query("DELETE FROM `" . $wpdb->prefix . "commentmeta` WHERE meta_key IN ('cackle_post_id', 'cackle_parent_post_id')");
                         $wpdb->query("DELETE FROM `" . $wpdb->prefix . "comments` WHERE comment_agent LIKE 'Cackle:%%'");
@@ -692,6 +848,8 @@ function cackle_request_handler() {
                         $status = 'partial';
                         //require_once(dirname(__FILE__) . '/manage.php');
                         $msg = cackle_i('Processed comments on post #%s&hellip;', $post_id);
+                        $manual_sync->finish=false;
+                        update_option('cackle_manual_sync',$manual_sync);
                     }
                     $result = 'fail';
                     ob_start();
@@ -713,8 +871,10 @@ function cackle_request_handler() {
                                 $object->time = time();
                                 update_option('cackle_monitor',$object);
                                 update_option('cackle_monitor_short',$object);
+                                $manual_sync->finish=true;
+                                update_option('cackle_manual_sync',$manual_sync);
 
-                                $msg = cackle_i('Your comments have been synchronized with Cackle and queued for import!<br/>After exporting the comments you receive email notification', 'http://cackle.me/help/');
+                                $msg = cackle_i('Your comments have been synchronized with Cackle!');
                             }
                             $result = 'success';
                         }
@@ -724,6 +884,9 @@ function cackle_request_handler() {
                     $response = compact('result', 'timestamp', 'status', 'post_id', 'msg', 'eof', 'response', 'debug');
                     header('Content-type: text/javascript');
                     echo cf_json_encode($response);
+                    $manual_sync->last_post_id=$post_id;
+                    update_option('cackle_manual_sync',$manual_sync);
+
                     die();
                 }
                 break;

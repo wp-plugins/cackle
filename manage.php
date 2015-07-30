@@ -21,6 +21,9 @@ function cackle_options() {
                     update_option('cackle_sso', (isset($_POST['enable_sso'])) ? 1 : 0);
                     //showmessage('account_api are saved');
                 }
+                if(ini_get('open_basedir')!='' || ini_get('safe_mode') == true){
+                    update_option('cackle_comments_hidewpcomnts', 1);
+                }
             }
         }
     }
@@ -28,7 +31,11 @@ function cackle_options() {
         return function_exists('curl_version');
     }
 
-    ?>
+
+
+
+
+?>
 <div class="wrap">
     <?php !_isCurl()? print_r("Attention, curl extention is not installed") : $c=1; ?>
     <?php $oldapiId = get_option('cackle_apiId')?>
@@ -41,7 +48,7 @@ function cackle_options() {
         }
             echo ' to obtain your Site ID, Account API Key, Site API Key. </p>'
             ?>
-
+        <?php (ini_get('open_basedir')!='' || ini_get('safe_mode') == true) ? print_r("<div class='error'> Synchronization (SEO) comments is disabled because <b>open_basedir</b> have value or <b>safe_mode</b> is On. Find these values in php.ini and set (;open_basedir and safe_mode = off) or ask hosting provider.</div>") : print_r("") ?>
         <h3>Settings</h3>
         <?php    wp_nonce_field(plugin_basename(__FILE__), 'cackle_comments_wpnonce', false, true); ?>
         <?php $apiId = get_option('cackle_apiId', '')?>
@@ -168,12 +175,26 @@ $show_advanced = (isset($_GET['t']) && $_GET['t'] == 'adv');
                     <th scope="row" valign="top"><?php echo cackle_i('Export comments to Cackle'); ?></th>
                     <td>
                         <div id="cackle_export">
-                            <p class="status">
-                                <a href="#"
-                                   class="button"><?php echo cackle_i('Export Comments'); ?></a>  <?php echo cackle_i('This will export your existing WordPress comments to Cackle'); ?>
-                            </p>
+                            <div class="status">
+                                <p><?php echo cackle_i('This will export your existing WordPress comments to Cackle'); ?></p>
+                                <?php
+                                $manual_export = get_option('cackle_manual_export');
+                                if((isset($manual_export->finish)&&($manual_export->finish !=true))) { ?>
+                                    <p class="cackle-notcomplete">  <?php echo cackle_i("Your last export was interrupted on post with id = $manual_export->last_post_id. Please, press Continue button to continue."); ?></p>
+                                <?php
+                                }
+                                ?>
+                                <br/>
+                                <div class="current-status"></div>
+                                <p>
+                                    <a href="#" id="export_start" class="button"><?php echo cackle_i('Start'); ?></a>
+                                    <a href="#" id="export_continue" class="button"><?php echo cackle_i('Continue'); ?></a>
+                                    <a href="#" id="export_stop" class="button"><?php echo cackle_i('Stop'); ?></a>
+                                </p>
+                            </div>
                         </div>
                     </td>
+
                 </tr>
 
                 <tr>
@@ -182,10 +203,19 @@ $show_advanced = (isset($_GET['t']) && $_GET['t'] == 'adv');
                         <div id="cackle_import">
                             <div class="status">
                                 <p><?php echo cackle_i('This will download your Cackle comments and store them locally in WordPress'); ?></p>
+                                <?php
+                                $manual_sync = get_option('cackle_manual_sync');
+                                if((isset($manual_sync->finish)&&($manual_sync->finish !=true))) { ?>
+                                  <p class="cackle-notcomplete">  <?php echo cackle_i("Your last download was interrupted on post with id = $manual_sync->last_post_id. Please, press Continue button to continue."); ?></p>
+                                <?php
+                                }
+                                ?>
                                 <br/>
-
+                                <div class="current-status"></div>
                                 <p>
-                                    <a href="#" class="button"><?php echo cackle_i('ReSyncComments'); ?></a>
+                                    <a href="#" id="sync_start" class="button"><?php echo cackle_i('Start'); ?></a>
+                                    <a href="#" id="sync_continue" class="button"><?php echo cackle_i('Continue'); ?></a>
+                                    <a href="#" id="sync_stop" class="button"><?php echo cackle_i('Stop'); ?></a>
                                 </p>
                             </div>
                         </div>

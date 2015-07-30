@@ -32,3 +32,6 @@ select.cackle-replace {
     margin: 15px 0 10px;
     padding: 0 0 0 150px;
 }
+.cackle-complete{
+    display: none;
+}

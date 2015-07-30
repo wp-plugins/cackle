@@ -103,19 +103,65 @@ if (!is_comments_close()) {
     </div>
 </div>
 
+    <?php
+    //define('ICL_LANGUAGE_CODE','xx');
+    if (defined('ICL_LANGUAGE_CODE')) {
+        switch (ICL_LANGUAGE_CODE){
+            case 'uk':
+                $lang_for_cackle = 'uk';
+                break;
+            case 'be':
+                $lang_for_cackle = 'be';
+                break;
+            case 'kk':
+                $lang_for_cackle = 'kk';
+            case 'en':
+                $lang_for_cackle = 'en';
+                break;
+            case 'es':
+                $lang_for_cackle = 'es';
+                break;
+            case 'de':
+                $lang_for_cackle = 'de';
+            case 'lv':
+                $lang_for_cackle = 'lv';
+                break;
+            case 'el':
+                $lang_for_cackle = 'el';
+                break;
+            case 'fr':
+                $lang_for_cackle = 'fr';
+            case 'ro':
+                $lang_for_cackle = 'ro';
+                break;
+            case 'it':
+                $lang_for_cackle = 'it';
+                break;
+            case 'ru':
+                $lang_for_cackle = 'ru';
+                break;
+            default:
+                $lang_for_cackle = null;
+        }
+
+    } else {
+        $lang_for_cackle = null;
+    }
+    ?>
+
 <script type="text/javascript">
     cackle_widget = window.cackle_widget || [];
     cackle_widget.push({widget: 'Comment', id: '<?php echo $api_id?>', channel: '<?php echo $post->ID?>',
-    <?php if (get_option('cackle_sso') == 1) : ?> ssoAuth: '<?php print_r(cackle_auth()) ?>' <?php endif;?>   });
-        document.getElementById('mc-container').innerHTML = '';
-        (function() {
-            var mc = document.createElement('script');
-            mc.type = 'text/javascript';
-            mc.async = true;
-            mc.src = ('https:' == document.location.protocol ? 'https' : 'http') + '://cackle.me/widget.js';
-            var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(mc, s.nextSibling);
-        })();
-</script>
+    <?php if (get_option('cackle_sso') == 1) : ?> ssoAuth: '<?php print_r(cackle_auth()) ?>'<?php endif;?><?php if ($lang_for_cackle != null) : ?>, lang: '<?php print_r($lang_for_cackle) ?>'<?php endif;?>});
+            document.getElementById('mc-container').innerHTML = '';
+            (function() {
+                var mc = document.createElement('script');
+                mc.type = 'text/javascript';
+                mc.async = true;
+                mc.src = ('https:' == document.location.protocol ? 'https' : 'http') + '://cackle.me/widget.js';
+                var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(mc, s.nextSibling);
+            })();
+    </script>
 
-<?php } ?>
+    <?php } ?>
 <?php if ($api_id == ''): ?>API ID not specified<?php endif; ?>
