@@ -92,7 +92,7 @@ if (!is_comments_close()) {
         <div id="mc-content">
 
             <?php
-            if (get_option('cackle_comments_hidewpcomnts') != 1) { ?>
+            if (get_option('cackle_sync') == 1) { ?>
                 <ul id="cackle-comments">
                     <?php
                     wp_list_comments(array('callback' => 'cackle_comment'));
@@ -141,18 +141,18 @@ if (!is_comments_close()) {
                 $lang_for_cackle = 'ru';
                 break;
             default:
-                $lang_for_cackle = null;
+                $lang_for_cackle = NULL;
         }
 
     } else {
-        $lang_for_cackle = null;
+        $lang_for_cackle = NULL;
     }
     ?>
 
 <script type="text/javascript">
     cackle_widget = window.cackle_widget || [];
-    cackle_widget.push({widget: 'Comment', id: '<?php echo $api_id?>', channel: '<?php echo $post->ID?>',
-    <?php if (get_option('cackle_sso') == 1) : ?> ssoAuth: '<?php print_r(cackle_auth()) ?>'<?php endif;?><?php if ($lang_for_cackle != null) : ?>, lang: '<?php print_r($lang_for_cackle) ?>'<?php endif;?>});
+    cackle_widget.push({widget: 'Comment', id: '<?php echo $api_id?>', channel: '<?php echo $post->ID?>'
+    <?php if (get_option('cackle_sso') == 1) : ?>, ssoAuth: '<?php print_r(cackle_auth()) ?>'<?php endif;?><?php if ($lang_for_cackle != NULL) : ?>, lang: '<?php print_r($lang_for_cackle) ?>'<?php endif;?>});
             document.getElementById('mc-container').innerHTML = '';
             (function() {
                 var mc = document.createElement('script');
@@ -165,3 +165,4 @@ if (!is_comments_close()) {
 
     <?php } ?>
 <?php if ($api_id == ''): ?>API ID not specified<?php endif; ?>
+
